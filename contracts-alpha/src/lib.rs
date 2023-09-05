@@ -11,7 +11,7 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LazyOption;
 use near_sdk::json_types::{U64, U128};
 use near_sdk::{
-    env, log, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault, Promise, PromiseOrValue,
+    env, log, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault, Balance, Promise, PromiseOrValue, ONE_NEAR
 };
 
 #[cfg(feature = "use_prod_chain")]
@@ -38,7 +38,7 @@ enum StorageKey {
 #[near_bindgen]
 impl Contract {
     const TOTAL_SUPPLY: U128 = U128(25000);
-    const NEAR_COST_PER_PACK: u128 = 4;
+    const NEAR_COST_PER_PACK: u128 = 4*ONE_NEAR;
     #[init]
     pub fn new_default_meta(owner_id: AccountId) -> Self {
         Self::new(
@@ -81,14 +81,16 @@ impl Contract {
         let buyer_id = env::signer_account_id();
         let buyer_deposit = env::attached_deposit();
         let num_packs = buyer_deposit / Self::NEAR_COST_PER_PACK;
-        assert!(num_packs > 0, "You must purchase at least 1 pack at {} NEAR per pack.", Self::NEAR_COST_PER_PACK);
+        assert!(num_packs > 0, "You must purchase at least 1 pack at {} NEAR per pack.", Self::NEAR_COST_PER_PACK / ONE_NEAR);
         let refund_amount = buyer_deposit % Self::NEAR_COST_PER_PACK;
         log!("Sent {} packs with {} refund", num_packs, refund_amount);
-        self.token.ft_transfer(buyer_id, U128(num_packs), Some(format!("Purchase of {} MONSTER ALPHA packs for {} NEAR", num_packs, num_packs * Self::NEAR_COST_PER_PACK)));
+        let sender_id = env::predecessor_account_id();
+        let amount: Balance = num_packs.into();
+        let memo = format!("Purchase of {} MONSTER ALPHA packs for {} NEAR", num_packs, num_packs * Self::NEAR_COST_PER_PACK / ONE_NEAR);
+        self.token.internal_transfer(&sender_id, &buyer_id, amount, Some(memo));
         if refund_amount > 0 {
-            //TODO refund
-            //Promise.new(buyer_id.clone())
-            //    .transfer(refund_amount)
+            Promise::new(buyer_id.clone())
+                .transfer(refund_amount);
         }
     }
 }
@@ -223,18 +225,18 @@ mod tests {
         testing_env!(context.build());
         let mut contract = Contract::new_default_meta(accounts(2).into());
         testing_env!(context
-            .storage_usage(env::storage_usage())
-            .attached_deposit(contract.storage_balance_bounds().min.into())
-            .predecessor_account_id(accounts(1))
-            .build());
+                     .storage_usage(env::storage_usage())
+                     .attached_deposit(contract.storage_balance_bounds().min.into())
+                     .predecessor_account_id(accounts(1))
+                     .build());
         // Paying for account registration, aka storage deposit
         contract.storage_deposit(None, None);
 
         testing_env!(context
-            .storage_usage(env::storage_usage())
-            .attached_deposit(1)
-            .predecessor_account_id(accounts(2))
-            .build());
+                     .storage_usage(env::storage_usage())
+                     .attached_deposit(1)
+                     .predecessor_account_id(accounts(2))
+                     .build());
         let transfer_amount = TOTAL_SUPPLY / 3;
         contract.ft_transfer(accounts(1), transfer_amount.into(), None);
 
@@ -267,16 +269,52 @@ mod tests {
     fn test_purchase_one() {
         let mut context = get_context(accounts(3));
         testing_env!(context.build());
-        let mut contract = Contract::new_default_meta(accounts(3).into());
+        let mut contract = Contract::new_default_meta(accounts(1).into());
+
+        testing_env!(context
+                     .storage_usage(env::storage_usage())
+                     .attached_deposit(contract.storage_balance_bounds().min.into())
+                     .predecessor_account_id(accounts(3))
+                     .build());
+        // Paying for account registration, aka storage deposit
+        contract.storage_deposit(None, None);
+
+
         testing_env!(context
             .storage_usage(env::storage_usage())
-            .attached_deposit(4)
+            .attached_deposit(4*ONE_NEAR)
             .predecessor_account_id(accounts(1))
             .build());
         // Paying for account registration, aka storage deposit
         contract.purchase();
-        assert_eq!(contract.ft_get_balance(accounts(3)), 1);
+        assert_eq!(contract.ft_balance_of(accounts(3)), U128(1));
     }
 
+
+    #[test]
+    fn test_purchase_refund() {
+        let mut context = get_context(accounts(3));
+        testing_env!(context.build());
+        let mut contract = Contract::new_default_meta(accounts(1).into());
+
+        testing_env!(context
+                     .storage_usage(env::storage_usage())
+                     .attached_deposit(contract.storage_balance_bounds().min.into())
+                     .predecessor_account_id(accounts(3))
+                     .build());
+        // Paying for account registration, aka storage deposit
+        contract.storage_deposit(None, None);
+
+        let refund_amount = 9;
+
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(4*ONE_NEAR + refund_amount)
+            .predecessor_account_id(accounts(1))
+            .build());
+        // Paying for account registration, aka storage deposit
+        contract.purchase();
+        assert_eq!(contract.ft_balance_of(accounts(3)), U128(1));
+    }
 
 }
