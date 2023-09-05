@@ -18,7 +18,7 @@ use near_sdk::{
 const MONSTERS_NFT_CONTRACT: &str = "monsters_nfts.near";
 
 #[cfg(not(feature = "use_prod_chain"))]
-const MONSTERS_NFT_CONTRACT: &str = "";
+const MONSTERS_NFT_CONTRACT: &str = "dev-1693936211939-67386471331489";
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -37,6 +37,7 @@ enum StorageKey {
 
 #[near_bindgen]
 impl Contract {
+    const CARDS_PER_PACK: U128 = U128(5);
     const TOTAL_SUPPLY: U128 = U128(25000);
     const NEAR_COST_PER_PACK: u128 = 4*ONE_NEAR;
     #[init]
@@ -92,6 +93,23 @@ impl Contract {
             Promise::new(buyer_id.clone())
                 .transfer(refund_amount);
         }
+    }
+
+    pub fn open_pack(&mut self) {
+        //TODO: check amount attached
+        let num_packs = 1; //TODO
+        assert!(num_packs > 0, "You must open one or more packs!");
+        //#TODO burn attached ALPHA
+        let num_mints = num_packs*CARDS_PER_PACK;
+        Promise::new(MONSTERS_NFT_CONTRACT)
+            .function_call(
+                "mint_random".as_bytes().to_vec(),
+                // Pass the parameters required for the mint function
+                // They must be serialized into bytes
+                vec![num_mints, env::predecessor_account_id()],
+                0,       // Attached deposit
+                300_000_000_000_000*num_mints, // Gas (make sure this is adequate)
+            );
     }
 }
 

@@ -32,6 +32,13 @@ enum StorageKey {
     Approval,
 }
 
+#[cfg(feature = "use_prod_chain")]
+const MONSTERS_ALPHA_CONTRACT: &str = "monsters_nfts.near";
+
+#[cfg(not(feature = "use_prod_chain"))]
+const MONSTERS_ALPHA_CONTRACT: &str = "dev-1693882284306-75813657022630";
+
+
 #[near_bindgen]
 impl Contract {
     #[init]
@@ -83,6 +90,16 @@ impl Contract {
     ) -> Token {
         assert_eq!(env::predecessor_account_id(), self.tokens.owner_id, "Unauthorized");
         self.tokens.internal_mint(token_id, token_owner_id, Some(token_metadata))
+    }
+
+    pub fn mint_random(&mut self, amount: U128, token_owner_id: AccountId) -> Vec<Token> {
+        assert_eq!(env::predecessor_account_id(), MONSTERS_ALPHA_CONTRACT, "Unauthorized");
+        //TODO verify creator
+        (0..amount).map { |_|
+            let token_metadata = None; //TODO generate random?
+            let token_id = "0-000-1"; //TODO label with shard-index?
+            self.tokens.internal_mint(token_id, token_owner_id, Some(token_metadata))
+        }
     }
 }
 
