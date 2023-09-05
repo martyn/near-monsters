@@ -1,170 +1,161 @@
-use near_contract_standards::fungible_token::metadata::{
-    FungibleTokenMetadata, FungibleTokenMetadataProvider, FT_METADATA_SPEC,
+use std::collections::HashMap;
+use near_contract_standards::non_fungible_token::metadata::{
+    NFTContractMetadata, NonFungibleTokenMetadataProvider, TokenMetadata, NFT_METADATA_SPEC,
 };
-use near_contract_standards::fungible_token::{
-    FungibleToken, FungibleTokenCore, FungibleTokenResolver,
-};
-use near_contract_standards::storage_management::{
-    StorageBalance, StorageBalanceBounds, StorageManagement,
-};
+use near_contract_standards::non_fungible_token::NonFungibleToken;
+use near_contract_standards::non_fungible_token::{Token, TokenId};
+use near_contract_standards::non_fungible_token::approval::NonFungibleTokenApproval;
+use near_contract_standards::non_fungible_token::core::{NonFungibleTokenCore, NonFungibleTokenResolver};
+use near_contract_standards::non_fungible_token::enumeration::NonFungibleTokenEnumeration;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LazyOption;
-use near_sdk::json_types::U128;
 use near_sdk::{
-    env, log, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault, PromiseOrValue,
+    env, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault, Promise, PromiseOrValue,
 };
-
-#[cfg(feature = "use_prod_chain")]
-const EXTERNAL_SERVER: &str = "monsters_nfts.near";
-
-#[cfg(not(feature = "use_prod_chain"))]
-const EXTERNAL_SERVER: &str = "";
+use near_sdk::json_types::U128;
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
-    token: FungibleToken,
-    metadata: LazyOption<FungibleTokenMetadata>,
+    tokens: NonFungibleToken,
+    metadata: LazyOption<NFTContractMetadata>,
 }
 
 const DATA_IMAGE_SVG_NEAR_ICON: &str = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 288 288'%3E%3Cg id='l' data-name='l'%3E%3Cpath d='M187.58,79.81l-30.1,44.69a3.2,3.2,0,0,0,4.75,4.2L191.86,103a1.2,1.2,0,0,1,2,.91v80.46a1.2,1.2,0,0,1-2.12.77L102.18,77.93A15.35,15.35,0,0,0,90.47,72.5H87.34A15.34,15.34,0,0,0,72,87.84V201.16A15.34,15.34,0,0,0,87.34,216.5h0a15.35,15.35,0,0,0,13.08-7.31l30.1-44.69a3.2,3.2,0,0,0-4.75-4.2L96.14,186a1.2,1.2,0,0,1-2-.91V104.61a1.2,1.2,0,0,1,2.12-.77l89.55,107.23a15.35,15.35,0,0,0,11.71,5.43h3.13A15.34,15.34,0,0,0,216,201.16V87.84A15.34,15.34,0,0,0,200.66,72.5h0A15.35,15.35,0,0,0,187.58,79.81Z'/%3E%3C/g%3E%3C/svg%3E";
 
 #[derive(BorshSerialize, BorshStorageKey)]
 enum StorageKey {
-    FungibleToken,
+    NonFungibleToken,
     Metadata,
+    TokenMetadata,
+    Enumeration,
+    Approval,
 }
 
 #[near_bindgen]
 impl Contract {
-    /// Initializes the contract with the given total supply owned by the given `owner_id` with
-    /// default metadata (for example purposes only).
     #[init]
-    pub fn new_default_meta(owner_id: AccountId, total_supply: U128) -> Self {
+    pub fn new_default_meta(owner_id: AccountId) -> Self {
         Self::new(
             owner_id,
-            total_supply,
-            FungibleTokenMetadata {
-                spec: FT_METADATA_SPEC.to_string(),
-                name: "NEAR Monsters ALPHA packs".to_string(),
-                symbol: "MONSTERS_ALPHA".to_string(),
-                icon: Some(DATA_IMAGE_SVG_NEAR_ICON.to_string()), //TODO
+            NFTContractMetadata {
+                spec: NFT_METADATA_SPEC.to_string(),
+                name: "NEAR MONSTERS NFT Collection".to_string(),
+                symbol: "MONSTERS".to_string(),
+                icon: Some(DATA_IMAGE_SVG_NEAR_ICON.to_string()),
+                base_uri: None,
                 reference: None,
-                total_supply: 25000,
                 reference_hash: None,
-                decimals: 0,
             },
         )
     }
 
-    /// Initializes the contract with the given total supply owned by the given `owner_id` with
-    /// the given fungible token metadata.
     #[init]
-    pub fn new(owner_id: AccountId, total_supply: U128, metadata: FungibleTokenMetadata) -> Self {
+    pub fn new(owner_id: AccountId, metadata: NFTContractMetadata) -> Self {
         require!(!env::state_exists(), "Already initialized");
         metadata.assert_valid();
-        let mut this = Self {
-            token: FungibleToken::new(StorageKey::FungibleToken),
+        Self {
+            tokens: NonFungibleToken::new(
+                StorageKey::NonFungibleToken,
+                owner_id,
+                Some(StorageKey::TokenMetadata),
+                Some(StorageKey::Enumeration),
+                Some(StorageKey::Approval),
+            ),
             metadata: LazyOption::new(StorageKey::Metadata, Some(&metadata)),
-        };
-        this.token.internal_register_account(&owner_id);
-        this.token.internal_deposit(&owner_id, total_supply.into());
-
-        near_contract_standards::fungible_token::events::FtMint {
-            owner_id: &owner_id,
-            amount: &total_supply,
-            memo: Some("ALPHA has been created."),
         }
-        .emit();
-
-        this
-    }
-}
-
-#[near_bindgen]
-impl FungibleTokenCore for Contract {
-    #[payable]
-    fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>) {
-        self.token.ft_transfer(receiver_id, amount, memo)
     }
 
+    /// Mint a new token with ID=`token_id` belonging to `token_owner_id`.
+    ///
+    /// Since this example implements metadata, it also requires per-token metadata to be provided
+    /// in this call. `self.tokens.mint` will also require it to be Some, since
+    /// `StorageKey::TokenMetadata` was provided at initialization.
+    ///
+    /// `self.tokens.mint` will enforce `predecessor_account_id` to equal the `owner_id` given in
+    /// initialization call to `new`.
     #[payable]
-    fn ft_transfer_call(
+    pub fn nft_mint(
         &mut self,
-        receiver_id: AccountId,
-        amount: U128,
-        memo: Option<String>,
-        msg: String,
-    ) -> PromiseOrValue<U128> {
-        self.token.ft_transfer_call(receiver_id, amount, memo, msg)
-    }
-
-    fn ft_total_supply(&self) -> U128 {
-        self.token.ft_total_supply()
-    }
-
-    fn ft_balance_of(&self, account_id: AccountId) -> U128 {
-        self.token.ft_balance_of(account_id)
+        token_id: TokenId,
+        token_owner_id: AccountId,
+        token_metadata: TokenMetadata,
+    ) -> Token {
+        assert_eq!(env::predecessor_account_id(), self.tokens.owner_id, "Unauthorized");
+        self.tokens.internal_mint(token_id, token_owner_id, Some(token_metadata))
     }
 }
 
 #[near_bindgen]
-impl FungibleTokenResolver for Contract {
+impl NonFungibleTokenCore for Contract {
+    #[payable]
+    fn nft_transfer(&mut self, receiver_id: AccountId, token_id: TokenId, approval_id: Option<u64>, memo: Option<String>) {
+        self.tokens.nft_transfer(receiver_id, token_id, approval_id, memo);
+    }
+
+    #[payable]
+    fn nft_transfer_call(&mut self, receiver_id: AccountId, token_id: TokenId, approval_id: Option<u64>, memo: Option<String>, msg: String) -> PromiseOrValue<bool> {
+        self.tokens.nft_transfer_call(receiver_id, token_id, approval_id, memo, msg)
+    }
+
+    fn nft_token(&self, token_id: TokenId) -> Option<Token> {
+        self.tokens.nft_token(token_id)
+    }
+}
+
+#[near_bindgen]
+impl NonFungibleTokenResolver for Contract {
     #[private]
-    fn ft_resolve_transfer(
-        &mut self,
-        sender_id: AccountId,
-        receiver_id: AccountId,
-        amount: U128,
-    ) -> U128 {
-        let (used_amount, burned_amount) =
-            self.token.internal_ft_resolve_transfer(&sender_id, receiver_id, amount);
-        if burned_amount > 0 {
-            log!("Account @{} burned {}", sender_id, burned_amount);
-        }
-        used_amount.into()
+    fn nft_resolve_transfer(&mut self, previous_owner_id: AccountId, receiver_id: AccountId, token_id: TokenId, approved_account_ids: Option<HashMap<AccountId, u64>>) -> bool {
+        self.tokens.nft_resolve_transfer(previous_owner_id, receiver_id, token_id, approved_account_ids)
     }
 }
 
 #[near_bindgen]
-impl StorageManagement for Contract {
+impl NonFungibleTokenApproval for Contract {
     #[payable]
-    fn storage_deposit(
-        &mut self,
-        account_id: Option<AccountId>,
-        registration_only: Option<bool>,
-    ) -> StorageBalance {
-        self.token.storage_deposit(account_id, registration_only)
+    fn nft_approve(&mut self, token_id: TokenId, account_id: AccountId, msg: Option<String>) -> Option<Promise> {
+        self.tokens.nft_approve(token_id, account_id, msg)
     }
 
     #[payable]
-    fn storage_withdraw(&mut self, amount: Option<U128>) -> StorageBalance {
-        self.token.storage_withdraw(amount)
+    fn nft_revoke(&mut self, token_id: TokenId, account_id: AccountId) {
+        self.tokens.nft_revoke(token_id, account_id);
     }
 
     #[payable]
-    fn storage_unregister(&mut self, force: Option<bool>) -> bool {
-        #[allow(unused_variables)]
-        if let Some((account_id, balance)) = self.token.internal_storage_unregister(force) {
-            log!("Closed @{} with {}", account_id, balance);
-            true
-        } else {
-            false
-        }
+    fn nft_revoke_all(&mut self, token_id: TokenId) {
+        self.tokens.nft_revoke_all(token_id);
+
     }
 
-    fn storage_balance_bounds(&self) -> StorageBalanceBounds {
-        self.token.storage_balance_bounds()
-    }
-
-    fn storage_balance_of(&self, account_id: AccountId) -> Option<StorageBalance> {
-        self.token.storage_balance_of(account_id)
+    fn nft_is_approved(&self, token_id: TokenId, approved_account_id: AccountId, approval_id: Option<u64>) -> bool {
+        self.tokens.nft_is_approved(token_id, approved_account_id, approval_id)
     }
 }
 
 #[near_bindgen]
-impl FungibleTokenMetadataProvider for Contract {
-    fn ft_metadata(&self) -> FungibleTokenMetadata {
+impl NonFungibleTokenEnumeration for Contract {
+    fn nft_total_supply(&self) -> U128 {
+        self.tokens.nft_total_supply()
+    }
+
+    fn nft_tokens(&self, from_index: Option<U128>, limit: Option<u64>) -> Vec<Token> {
+        self.tokens.nft_tokens(from_index, limit)
+    }
+
+    fn nft_supply_for_owner(&self, account_id: AccountId) -> U128 {
+        self.tokens.nft_supply_for_owner(account_id)
+    }
+
+    fn nft_tokens_for_owner(&self, account_id: AccountId, from_index: Option<U128>, limit: Option<u64>) -> Vec<Token> {
+        self.tokens.nft_tokens_for_owner(account_id, from_index, limit)
+    }
+}
+
+#[near_bindgen]
+impl NonFungibleTokenMetadataProvider for Contract {
+    fn nft_metadata(&self) -> NFTContractMetadata {
         self.metadata.get().unwrap()
     }
 }
@@ -172,11 +163,12 @@ impl FungibleTokenMetadataProvider for Contract {
 #[cfg(all(test, not(target_arch = "wasm32")))]
 mod tests {
     use near_sdk::test_utils::{accounts, VMContextBuilder};
-    use near_sdk::{testing_env, Balance};
+    use near_sdk::testing_env;
+    use std::collections::HashMap;
 
     use super::*;
 
-    const TOTAL_SUPPLY: Balance = 1_000_000_000_000_000;
+    const MINT_STORAGE_COST: u128 = 5870000000000000000000;
 
     fn get_context(predecessor_account_id: AccountId) -> VMContextBuilder {
         let mut builder = VMContextBuilder::new();
@@ -187,14 +179,30 @@ mod tests {
         builder
     }
 
+    fn sample_token_metadata() -> TokenMetadata {
+        TokenMetadata {
+            title: Some("Olympus Mons".into()),
+            description: Some("The tallest mountain in the charted solar system".into()),
+            media: None,
+            media_hash: None,
+            copies: Some(1u64),
+            issued_at: None,
+            expires_at: None,
+            starts_at: None,
+            updated_at: None,
+            extra: None,
+            reference: None,
+            reference_hash: None,
+        }
+    }
+
     #[test]
     fn test_new() {
         let mut context = get_context(accounts(1));
         testing_env!(context.build());
-        let contract = Contract::new_default_meta(accounts(1).into(), TOTAL_SUPPLY.into());
+        let contract = Contract::new_default_meta(accounts(1).into());
         testing_env!(context.is_view(true).build());
-        assert_eq!(contract.ft_total_supply().0, TOTAL_SUPPLY);
-        assert_eq!(contract.ft_balance_of(accounts(1)).0, TOTAL_SUPPLY);
+        assert_eq!(contract.nft_token("1".to_string()), None);
     }
 
     #[test]
@@ -206,25 +214,45 @@ mod tests {
     }
 
     #[test]
-    fn test_transfer() {
-        let mut context = get_context(accounts(2));
+    fn test_mint() {
+        let mut context = get_context(accounts(0));
         testing_env!(context.build());
-        let mut contract = Contract::new_default_meta(accounts(2).into(), TOTAL_SUPPLY.into());
+        let mut contract = Contract::new_default_meta(accounts(0).into());
+
         testing_env!(context
             .storage_usage(env::storage_usage())
-            .attached_deposit(contract.storage_balance_bounds().min.into())
-            .predecessor_account_id(accounts(1))
+            .attached_deposit(MINT_STORAGE_COST)
+            .predecessor_account_id(accounts(0))
             .build());
-        // Paying for account registration, aka storage deposit
-        contract.storage_deposit(None, None);
+
+        let token_id = "0".to_string();
+        let token = contract.nft_mint(token_id.clone(), accounts(0), sample_token_metadata());
+        assert_eq!(token.token_id, token_id);
+        assert_eq!(token.owner_id, accounts(0));
+        assert_eq!(token.metadata.unwrap(), sample_token_metadata());
+        assert_eq!(token.approved_account_ids.unwrap(), HashMap::new());
+    }
+
+    #[test]
+    fn test_transfer() {
+        let mut context = get_context(accounts(0));
+        testing_env!(context.build());
+        let mut contract = Contract::new_default_meta(accounts(0).into());
+
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(MINT_STORAGE_COST)
+            .predecessor_account_id(accounts(0))
+            .build());
+        let token_id = "0".to_string();
+        contract.nft_mint(token_id.clone(), accounts(0), sample_token_metadata());
 
         testing_env!(context
             .storage_usage(env::storage_usage())
             .attached_deposit(1)
-            .predecessor_account_id(accounts(2))
+            .predecessor_account_id(accounts(0))
             .build());
-        let transfer_amount = TOTAL_SUPPLY / 3;
-        contract.ft_transfer(accounts(1), transfer_amount.into(), None);
+        contract.nft_transfer(accounts(1), token_id.clone(), None, None);
 
         testing_env!(context
             .storage_usage(env::storage_usage())
@@ -232,7 +260,120 @@ mod tests {
             .is_view(true)
             .attached_deposit(0)
             .build());
-        assert_eq!(contract.ft_balance_of(accounts(2)).0, (TOTAL_SUPPLY - transfer_amount));
-        assert_eq!(contract.ft_balance_of(accounts(1)).0, transfer_amount);
+        if let Some(token) = contract.nft_token(token_id.clone()) {
+            assert_eq!(token.token_id, token_id);
+            assert_eq!(token.owner_id, accounts(1));
+            assert_eq!(token.metadata.unwrap(), sample_token_metadata());
+            assert_eq!(token.approved_account_ids.unwrap(), HashMap::new());
+        } else {
+            panic!("token not correctly created, or not found by nft_token");
+        }
+    }
+
+    #[test]
+    fn test_approve() {
+        let mut context = get_context(accounts(0));
+        testing_env!(context.build());
+        let mut contract = Contract::new_default_meta(accounts(0).into());
+
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(MINT_STORAGE_COST)
+            .predecessor_account_id(accounts(0))
+            .build());
+        let token_id = "0".to_string();
+        contract.nft_mint(token_id.clone(), accounts(0), sample_token_metadata());
+
+        // alice approves bob
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(150000000000000000000)
+            .predecessor_account_id(accounts(0))
+            .build());
+        contract.nft_approve(token_id.clone(), accounts(1), None);
+
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .account_balance(env::account_balance())
+            .is_view(true)
+            .attached_deposit(0)
+            .build());
+        assert!(contract.nft_is_approved(token_id.clone(), accounts(1), Some(1)));
+    }
+
+    #[test]
+    fn test_revoke() {
+        let mut context = get_context(accounts(0));
+        testing_env!(context.build());
+        let mut contract = Contract::new_default_meta(accounts(0).into());
+
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(MINT_STORAGE_COST)
+            .predecessor_account_id(accounts(0))
+            .build());
+        let token_id = "0".to_string();
+        contract.nft_mint(token_id.clone(), accounts(0), sample_token_metadata());
+
+        // alice approves bob
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(150000000000000000000)
+            .predecessor_account_id(accounts(0))
+            .build());
+        contract.nft_approve(token_id.clone(), accounts(1), None);
+
+        // alice revokes bob
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(1)
+            .predecessor_account_id(accounts(0))
+            .build());
+        contract.nft_revoke(token_id.clone(), accounts(1));
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .account_balance(env::account_balance())
+            .is_view(true)
+            .attached_deposit(0)
+            .build());
+        assert!(!contract.nft_is_approved(token_id.clone(), accounts(1), None));
+    }
+
+    #[test]
+    fn test_revoke_all() {
+        let mut context = get_context(accounts(0));
+        testing_env!(context.build());
+        let mut contract = Contract::new_default_meta(accounts(0).into());
+
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(MINT_STORAGE_COST)
+            .predecessor_account_id(accounts(0))
+            .build());
+        let token_id = "0".to_string();
+        contract.nft_mint(token_id.clone(), accounts(0), sample_token_metadata());
+
+        // alice approves bob
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(150000000000000000000)
+            .predecessor_account_id(accounts(0))
+            .build());
+        contract.nft_approve(token_id.clone(), accounts(1), None);
+
+        // alice revokes bob
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(1)
+            .predecessor_account_id(accounts(0))
+            .build());
+        contract.nft_revoke_all(token_id.clone());
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .account_balance(env::account_balance())
+            .is_view(true)
+            .attached_deposit(0)
+            .build());
+        assert!(!contract.nft_is_approved(token_id.clone(), accounts(1), Some(1)));
     }
 }
