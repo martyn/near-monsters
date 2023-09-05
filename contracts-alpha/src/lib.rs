@@ -290,7 +290,6 @@ mod tests {
         assert_eq!(contract.ft_balance_of(accounts(3)), U128(1));
     }
 
-
     #[test]
     fn test_purchase_refund() {
         let mut context = get_context(accounts(3));
