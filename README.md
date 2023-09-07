@@ -1,7 +1,3 @@
-
-A NEAR monsters.
-
-
 # About
 
 NEAR monsters is a collectible trading card game on the NEAR blockchain.
