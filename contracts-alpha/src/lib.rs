@@ -11,7 +11,7 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LazyOption;
 use near_sdk::json_types::{U64, U128};
 use near_sdk::{
-    env, log, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault, Balance, Promise, PromiseOrValue, ONE_NEAR
+    env, log, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault, Balance, Promise, PromiseOrValue, ONE_NEAR, serde_json
 };
 
 #[cfg(feature = "use_prod_chain")]
@@ -96,22 +96,34 @@ impl Contract {
         }
     }
 
-    //pub fn open_pack(&mut self) {
-    //    //TODO: check amount attached
-    //    let num_packs = 1; //TODO
-    //    assert!(num_packs > 0, "You must open one or more packs!");
-    //    //#TODO burn attached ALPHA
-    //    let num_mints = num_packs*CARDS_PER_PACK;
-    //    Promise::new(MONSTERS_NFT_CONTRACT)
-    //        .function_call(
-    //            "mint_random".as_bytes().to_vec(),
-    //            // Pass the parameters required for the mint function
-    //            // They must be serialized into bytes
-    //            vec![num_mints, env::predecessor_account_id()],
-    //            0,       // Attached deposit
-    //            300_000_000_000_000*num_mints, // Gas (make sure this is adequate)
-    //        );
-    //}
+    pub fn open_pack(&mut self) {
+        let num_packs = U128(1); //Limit to 1 for now
+        // TODO assert enough gas and storage enabled on NFT contract. Think about race conditions
+        let sender_id = &env::predecessor_account_id();
+        let receiver_id = &env::current_account_id();//TODO &"system";
+        self.token.internal_ft_resolve_transfer(sender_id, receiver_id.clone(), num_packs);
+        let account_id = env::current_account_id();
+        let prepaid_gas = env::prepaid_gas();
+        let mint_gas = env::prepaid_gas(); //TODO
+
+        let burn_promise = env::promise_create(
+            account_id,
+            "burn",
+            &serde_json::to_vec(&(1,)).unwrap(),
+            0,
+            prepaid_gas,
+        );
+
+        let mint_promise = env::promise_then(
+            burn_promise,
+            AccountId::new_unchecked(MONSTERS_NFT_CONTRACT.to_string()),
+            "mint_random",
+            &serde_json::to_vec(&(Self::CARDS_PER_PACK,)).unwrap(),
+            0,
+            mint_gas,
+        );
+        env::promise_return(mint_promise)
+    }
 }
 
 #[near_bindgen]
