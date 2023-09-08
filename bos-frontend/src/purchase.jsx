@@ -23,15 +23,25 @@ const AlphaPurchase = ({ maxBuy, ftContract }) => {
     State.update({error:null, packsToBuy: value, estimatedCost: (value * 4)});
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     try {
       // Perform smart contract call to buy packs
-      Near.call(ftContract, 'purchase', {}, 300000000000000, 4*ONE_NEAR);
+      Near.call(ftContract, 'purchase', {}, 300000000000000, state.packsToBuy*4*ONE_NEAR);
       State.update({error:null});
     } catch (e) {
       State.update({error:`Error from NEAR: ${e.message}`});
     }
   };
+
+  const register = () => {
+    try {
+      // Perform smart contract call to buy packs
+      Near.call(ftContract, 'storage_deposit', {}, 300000000000000, ONE_NEAR/100);
+    } catch (e) {
+      State.update({error:`Error from NEAR: ${e.message}`});
+    }
+
+  }
 
   return (
     <div>
@@ -43,6 +53,7 @@ const AlphaPurchase = ({ maxBuy, ftContract }) => {
         value={state.packsToBuy}
         onChange={handleInputChange}
       />
+      <button onClick={register}>Register</button>
       <button onClick={handleSubmit} disabled={state.error !== null}>Buy Packs</button>
       <p>Estimated Cost: {state.estimatedCost} NEAR</p>
     </div>

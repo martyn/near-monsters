@@ -78,14 +78,15 @@ impl Contract {
         this
     }
 
+    #[payable]
     pub fn purchase(&mut self) {
-        let buyer_id = env::signer_account_id();
+        let buyer_id = env::predecessor_account_id();
         let buyer_deposit = env::attached_deposit();
         let num_packs = buyer_deposit / Self::NEAR_COST_PER_PACK;
         assert!(num_packs > 0, "You must purchase at least 1 pack at {} NEAR per pack.", Self::NEAR_COST_PER_PACK / ONE_NEAR);
         let refund_amount = buyer_deposit % Self::NEAR_COST_PER_PACK;
         log!("Sent {} packs with {} refund", num_packs, refund_amount);
-        let sender_id = env::predecessor_account_id();
+        let sender_id = env::current_account_id();
         let amount: Balance = num_packs.into();
         let memo = format!("Purchase of {} MONSTER ALPHA packs for {} NEAR", num_packs, num_packs * Self::NEAR_COST_PER_PACK / ONE_NEAR);
         self.token.internal_transfer(&sender_id, &buyer_id, amount, Some(memo));
@@ -95,22 +96,22 @@ impl Contract {
         }
     }
 
-    pub fn open_pack(&mut self) {
-        //TODO: check amount attached
-        let num_packs = 1; //TODO
-        assert!(num_packs > 0, "You must open one or more packs!");
-        //#TODO burn attached ALPHA
-        let num_mints = num_packs*CARDS_PER_PACK;
-        Promise::new(MONSTERS_NFT_CONTRACT)
-            .function_call(
-                "mint_random".as_bytes().to_vec(),
-                // Pass the parameters required for the mint function
-                // They must be serialized into bytes
-                vec![num_mints, env::predecessor_account_id()],
-                0,       // Attached deposit
-                300_000_000_000_000*num_mints, // Gas (make sure this is adequate)
-            );
-    }
+    //pub fn open_pack(&mut self) {
+    //    //TODO: check amount attached
+    //    let num_packs = 1; //TODO
+    //    assert!(num_packs > 0, "You must open one or more packs!");
+    //    //#TODO burn attached ALPHA
+    //    let num_mints = num_packs*CARDS_PER_PACK;
+    //    Promise::new(MONSTERS_NFT_CONTRACT)
+    //        .function_call(
+    //            "mint_random".as_bytes().to_vec(),
+    //            // Pass the parameters required for the mint function
+    //            // They must be serialized into bytes
+    //            vec![num_mints, env::predecessor_account_id()],
+    //            0,       // Attached deposit
+    //            300_000_000_000_000*num_mints, // Gas (make sure this is adequate)
+    //        );
+    //}
 }
 
 #[near_bindgen]
