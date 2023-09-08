@@ -1,0 +1,66 @@
+const ftContract = (context.networkId === "mainnet") ? "..." : "dev-1693882284306-75813657022630";
+const alphaPacksRemaining = Near.view(ftContract, "ft_balance_of", {account_id: ftContract});
+const alphaPacksOwned = Near.view(ftContract, "ft_balance_of", {account_id: context.accountId});
+const ONE_NEAR = 1e24;
+State.init({packsToBuy: null, estimatedCost: 0, error: null});
+
+const AlphaPurchase = ({ maxBuy, ftContract }) => {
+  const handleInputChange = (e) => {
+    let value = 0;
+    try {
+      console.log("parsing", e.target.value);
+      value = parseInt(e.target.value, 10);
+    } catch (e) {
+    }
+    if (value <= 0) {
+      State.update({error:'Cannot buy less than 1 pack.'});
+      return;
+    }
+    if (value > maxBuy) {
+      State.update({error:'Cannot buy less than 1 pack.'});
+      return;
+    }
+    State.update({error:null, packsToBuy: value, estimatedCost: (value * 4)});
+  };
+
+  const handleSubmit = async () => {
+    try {
+      // Perform smart contract call to buy packs
+      Near.call(ftContract, 'purchase', {}, 300000000000000, 4*ONE_NEAR);
+      State.update({error:null});
+    } catch (e) {
+      State.update({error:`Error from NEAR: ${e.message}`});
+    }
+  };
+
+  return (
+    <div>
+      {state.error && <p className="error">{state.error}</p>}
+      <label htmlFor="packsToBuy">Number of Packs: </label>
+      <input
+        id="packsToBuy"
+        type="number"
+        value={state.packsToBuy}
+        onChange={handleInputChange}
+      />
+      <button onClick={handleSubmit} disabled={state.error !== null}>Buy Packs</button>
+      <p>Estimated Cost: {state.estimatedCost} NEAR</p>
+    </div>
+  );
+};
+
+return (
+  <>
+    <div class="container border border-info p-3">
+      <h3 class="text-center">
+        <div>
+          <span class="text-decoration-underline">{alphaPacksRemaining}</span> packs remaining
+        </div>
+        <div>
+          <span class="text-decoration-underline">{alphaPacksOwned}</span> packs owned
+        </div>
+      </h3>
+      <AlphaPurchase maxBuy={alphaPacksRemaining} ftContract={ftContract}/>
+    </div>
+  </>
+);
