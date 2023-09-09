@@ -11,7 +11,7 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LazyOption;
 use near_sdk::json_types::U128;
 use near_sdk::{
-    env, log, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault, Balance, Promise, PromiseOrValue, ONE_NEAR, serde_json
+    env, log, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault, Balance, Promise, PromiseOrValue, ONE_NEAR, serde_json, Gas
 };
 
 #[cfg(feature = "use_prod_chain")]
@@ -99,30 +99,23 @@ impl Contract {
         }
     }
 
+    #[payable]
     pub fn open_pack(&mut self) {
         let num_packs = U128(1); //Limit to 1 for now
         // TODO assert enough gas and storage enabled on NFT contract. Think about race conditions
         let sender_id = &env::predecessor_account_id();
-        let receiver_id = &env::current_account_id();//TODO &"system";
-        self.token.internal_ft_resolve_transfer(sender_id, receiver_id.clone(), num_packs);
-        let account_id = env::current_account_id();
-        let prepaid_gas = env::prepaid_gas();
-        let mint_gas = env::prepaid_gas(); //TODO
+        let receiver_id = AccountId::new_unchecked("system".into());
+        let mint_gas = env::prepaid_gas() - Gas(100000000000000); //TODO
 
-        let burn_promise = env::promise_create(
-            account_id,
-            "burn",
-            &serde_json::to_vec(&(1,)).unwrap(),
-            0,
-            prepaid_gas,
-        );
-
-        let mint_promise = env::promise_then(
-            burn_promise,
-            AccountId::new_unchecked(MONSTERS_NFT_CONTRACT.to_string()),
+        log!("executing token transfer");
+        let memo = "Open pack";
+        self.token.internal_transfer(&sender_id, &receiver_id, num_packs.into(), Some(memo.into()));
+        log!("executing contract");
+        let mint_promise = env::promise_create(
+            AccountId::new_unchecked(MONSTERS_NFT_CONTRACT.into()),
             "mint_random",
-            &serde_json::to_vec(&(Self::CARDS_PER_PACK,)).unwrap(),
-            0,
+            &serde_json::to_vec(&(Self::CARDS_PER_PACK,sender_id)).unwrap(),
+            6240000000000000000000,
             mint_gas,
         );
         env::promise_return(mint_promise)

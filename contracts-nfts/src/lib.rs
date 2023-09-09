@@ -10,9 +10,10 @@ use near_contract_standards::non_fungible_token::enumeration::NonFungibleTokenEn
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LazyOption;
 use near_sdk::{
-    env, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault, Promise, PromiseOrValue,
+    env, log, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault, Promise, PromiseOrValue,
 };
 use near_sdk::json_types::U128;
+use near_sdk::env::random_seed;
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -73,33 +74,40 @@ impl Contract {
         }
     }
 
-    /// Mint a new token with ID=`token_id` belonging to `token_owner_id`.
-    ///
-    /// Since this example implements metadata, it also requires per-token metadata to be provided
-    /// in this call. `self.tokens.mint` will also require it to be Some, since
-    /// `StorageKey::TokenMetadata` was provided at initialization.
-    ///
-    /// `self.tokens.mint` will enforce `predecessor_account_id` to equal the `owner_id` given in
-    /// initialization call to `new`.
-    #[payable]
-    pub fn nft_mint(
-        &mut self,
-        token_id: TokenId,
-        token_owner_id: AccountId,
-        token_metadata: TokenMetadata,
-    ) -> Token {
-        assert_eq!(env::predecessor_account_id(), self.tokens.owner_id, "Unauthorized");
-        self.tokens.internal_mint(token_id, token_owner_id, Some(token_metadata))
-    }
 
+    #[payable]
     pub fn mint_random(&mut self, amount: U128, token_owner_id: AccountId) -> Vec<Token> {
-        assert_eq!(env::predecessor_account_id(), MONSTERS_ALPHA_CONTRACT, "Unauthorized");
+        //assert_eq!(env::predecessor_account_id(), AccountId::new_unchecked(MONSTERS_ALPHA_CONTRACT.into()), "Unauthorized");
         //TODO verify creator
-        (0..amount).map { |_|
-            let token_metadata = None; //TODO generate random?
-            let token_id = "0-000-1"; //TODO label with shard-index?
-            self.tokens.internal_mint(token_id, token_owner_id, Some(token_metadata))
-        }
+        (0..amount.into()).map(|index| {
+            let token_metadata = TokenMetadata {
+                title: Some("Placeholder card".into()),
+                description: Some("Placeholder description".into()),
+                media: None,
+                media_hash: None,
+                copies: Some(1u64),
+                issued_at: None,
+                expires_at: None,
+                starts_at: None,
+                updated_at: None,
+                extra: None,
+                reference: None,
+                reference_hash: None,
+            };
+
+            let i = index as usize;
+            let last_four = &(random_seed()[i..(4+i)]);
+            let card_id = "000";
+            let set = "0";
+            let rand_id = last_four
+                .iter()
+                .map(|byte| format!("{:02x}", byte))
+                .collect::<String>()
+                .to_uppercase();
+            let token_id = format!("{}-{}-{}", set, card_id, rand_id);
+            log!("Creating card with token_id {}", token_id);
+            self.tokens.internal_mint(token_id.into(), token_owner_id.clone(), Some(token_metadata))
+        }).collect()
     }
 }
 
