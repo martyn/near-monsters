@@ -9,7 +9,7 @@ use near_contract_standards::storage_management::{
 };
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LazyOption;
-use near_sdk::json_types::{U64, U128};
+use near_sdk::json_types::U128;
 use near_sdk::{
     env, log, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault, Balance, Promise, PromiseOrValue, ONE_NEAR, serde_json
 };
@@ -85,11 +85,14 @@ impl Contract {
         let num_packs = buyer_deposit / Self::NEAR_COST_PER_PACK;
         assert!(num_packs > 0, "You must purchase at least 1 pack at {} NEAR per pack.", Self::NEAR_COST_PER_PACK / ONE_NEAR);
         let refund_amount = buyer_deposit % Self::NEAR_COST_PER_PACK;
-        log!("Sent {} packs with {} refund", num_packs, refund_amount);
         let sender_id = env::current_account_id();
+        log!("Sending {} packs from {} to {}", num_packs, buyer_id, sender_id);
         let amount: Balance = num_packs.into();
         let memo = format!("Purchase of {} MONSTER ALPHA packs for {} NEAR", num_packs, num_packs * Self::NEAR_COST_PER_PACK / ONE_NEAR);
+        log!(memo);
+        
         self.token.internal_transfer(&sender_id, &buyer_id, amount, Some(memo));
+        log!("Sent {} packs with {} refund", num_packs, refund_amount);
         if refund_amount > 0 {
             Promise::new(buyer_id.clone())
                 .transfer(refund_amount);
@@ -292,59 +295,27 @@ mod tests {
             .attached_deposit(0)
             .predecessor_account_id(accounts(1))
             .build());
-        // Paying for account registration, aka storage deposit
         contract.purchase();
     }
 
     #[test]
     fn test_purchase_one() {
-        let mut context = get_context(accounts(3));
+        let buyer_account = accounts(1);
+        let contract_account = accounts(0);
+        let mut context = get_context(buyer_account.clone());
         testing_env!(context.build());
-        let mut contract = Contract::new_default_meta(accounts(1).into());
-
-        testing_env!(context
-                     .storage_usage(env::storage_usage())
-                     .attached_deposit(contract.storage_balance_bounds().min.into())
-                     .predecessor_account_id(accounts(3))
-                     .build());
-        // Paying for account registration, aka storage deposit
-        contract.storage_deposit(None, None);
-
-
-        testing_env!(context
-            .storage_usage(env::storage_usage())
-            .attached_deposit(4*ONE_NEAR)
-            .predecessor_account_id(accounts(1))
-            .build());
-        // Paying for account registration, aka storage deposit
-        contract.purchase();
-        assert_eq!(contract.ft_balance_of(accounts(3)), U128(1));
-    }
-
-    #[test]
-    fn test_purchase_refund() {
-        let mut context = get_context(accounts(3));
-        testing_env!(context.build());
-        let mut contract = Contract::new_default_meta(accounts(1).into());
-
-        testing_env!(context
-                     .storage_usage(env::storage_usage())
-                     .attached_deposit(contract.storage_balance_bounds().min.into())
-                     .predecessor_account_id(accounts(3))
-                     .build());
-        // Paying for account registration, aka storage deposit
-        contract.storage_deposit(None, None);
-
+        let mut contract:Contract = Contract::new_default_meta(contract_account.clone()).into();
         let refund_amount = 9;
 
         testing_env!(context
             .storage_usage(env::storage_usage())
             .attached_deposit(4*ONE_NEAR + refund_amount)
-            .predecessor_account_id(accounts(1))
+            .predecessor_account_id(buyer_account.clone())
             .build());
-        // Paying for account registration, aka storage deposit
+        contract.storage_deposit(Some(buyer_account.clone()), None);
         contract.purchase();
-        assert_eq!(contract.ft_balance_of(accounts(3)), U128(1));
+        assert_eq!(contract.ft_balance_of(buyer_account.clone()), U128(1));
+        assert_eq!(contract.ft_balance_of(contract_account.clone()), U128(24999));
     }
 
 }
