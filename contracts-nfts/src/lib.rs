@@ -77,8 +77,7 @@ impl Contract {
 
     #[payable]
     pub fn mint_random(&mut self, amount: U128, token_owner_id: AccountId) -> Vec<Token> {
-        //assert_eq!(env::predecessor_account_id(), AccountId::new_unchecked(MONSTERS_ALPHA_CONTRACT.into()), "Unauthorized");
-        //TODO verify creator
+        assert_eq!(env::predecessor_account_id(), AccountId::new_unchecked(MONSTERS_ALPHA_CONTRACT.into()), "Unauthorized");
         (0..amount.into()).map(|index| {
             let token_metadata = TokenMetadata {
                 title: Some("Placeholder card".into()),
