@@ -3,7 +3,7 @@ const nftContract = (context.networkId === "mainnet") ? "..." : "dev-16939362119
 const alphaPacksOwned = Near.view(ftContract, "ft_balance_of", {account_id: context.accountId});
 const isOpenDisabled = (alphaPacksOwned === 0);
 const nftsOwned = Near.view(nftContract, "nft_supply_for_owner", {account_id: context.accountId});
-const nfts = Near.view(nftContract, "nft_tokens", {limit:1000});//{from_index: (nftsOwned-5).toString(), limit:5});
+const nfts = Near.view(nftContract, "nft_tokens_for_owner", {account_id: context.accountId, limit:1000});//{from_index: (nftsOwned-5).toString(), limit:5});
 const sortedNfts = nfts.sort((a, b) => {
   const dateA = a.metadata?.issued_at || "0000-00-00";
   const dateB = b.metadata?.issued_at || "0000-00-00";
@@ -41,7 +41,9 @@ return (
         revealNfts.map((nft) => <li><img src={nft.metadata.media} width={128}/>{nft.metadata.title} {nft.metadata.description}</li>)
       }
       </ul>
-      <div><span class="text-decoration-underline">{nftsOwned}</span> monster nfts collected</div>
+      <div>
+        <span class="text-decoration-underline">{nftsOwned}</span> Monster NFTs collected
+      </div>
     </div>
   </>
 )

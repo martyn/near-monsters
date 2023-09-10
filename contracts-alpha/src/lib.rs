@@ -112,7 +112,7 @@ impl Contract {
             AccountId::new_unchecked(MONSTERS_NFT_CONTRACT.into()),
             "mint_random",
             &serde_json::to_vec(&(Self::CARDS_PER_PACK,sender_id)).unwrap(),
-            6240000000000000000000,
+            10000000000000000000000,
             mint_gas,
         );
         env::promise_return(mint_promise)
