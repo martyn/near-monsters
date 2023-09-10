@@ -102,15 +102,12 @@ impl Contract {
     #[payable]
     pub fn open_pack(&mut self) {
         let num_packs = U128(1); //Limit to 1 for now
-        // TODO assert enough gas and storage enabled on NFT contract. Think about race conditions
         let sender_id = &env::predecessor_account_id();
         let receiver_id = AccountId::new_unchecked("system".into());
         let mint_gas = env::prepaid_gas() - Gas(100000000000000); //TODO
 
-        log!("executing token transfer");
         let memo = "Open pack";
         self.token.internal_transfer(&sender_id, &receiver_id, num_packs.into(), Some(memo.into()));
-        log!("executing contract");
         let mint_promise = env::promise_create(
             AccountId::new_unchecked(MONSTERS_NFT_CONTRACT.into()),
             "mint_random",

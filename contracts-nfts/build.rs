@@ -29,7 +29,6 @@ fn main() {
         writeln!(f, "        MonsterTemplate {{ name: \"{}\", url: \"{}\" }},", name, url).unwrap();
     }
 
-    
     writeln!(f, "    ]").unwrap();
     writeln!(f, "}}").unwrap();
 }
