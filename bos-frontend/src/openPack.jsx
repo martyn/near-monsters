@@ -11,6 +11,7 @@ const sortedNfts = nfts.sort((a, b) => {
 });
 
 const revealNfts = sortedNfts.slice(0, 5);
+const purchaseLink = "https://test.near.org/monstersdev.testnet/widget/purchase";
 
 State.init({error: null});
 const openPack = () => {
@@ -31,7 +32,7 @@ return (
           <div>
             <span class="text-decoration-underline">{alphaPacksOwned}</span> packs owned
             <button onClick={openPack} disabled={isOpenDisabled}>Open</button>
-            <button onClick={buyMore}>Buy More</button>
+            <a href={purchaseLink}>Buy More</a>
           </div>
         </div>
       </h3>

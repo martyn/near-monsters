@@ -2,6 +2,7 @@ const ftContract = (context.networkId === "mainnet") ? "..." : "dev-169388228430
 const alphaPacksRemaining = Near.view(ftContract, "ft_balance_of", {account_id: ftContract});
 const alphaPacksOwned = Near.view(ftContract, "ft_balance_of", {account_id: context.accountId});
 const ONE_NEAR = 1e24;
+const openPacksLink = "https://test.near.org/monstersdev.testnet/widget/openPack";
 State.init({packsToBuy: null, estimatedCost: 0, error: null});
 
 const AlphaPurchase = ({ maxBuy, ftContract }) => {
@@ -71,6 +72,7 @@ return (
         </div>
       </h3>
       <AlphaPurchase maxBuy={alphaPacksRemaining} ftContract={ftContract}/>
+      <a href={openPacksLink}>Open Packs</a>
     </div>
   </>
 );
