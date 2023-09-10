@@ -15,6 +15,23 @@ use near_sdk::{
 use near_sdk::json_types::U128;
 use near_sdk::env::random_seed;
 
+fn get_current_datetime() -> String {
+    // Get the current block timestamp in nanoseconds.
+    let timestamp_ns = env::block_timestamp();
+    
+    // Convert nanoseconds to seconds.
+    let timestamp_s = timestamp_ns / 1_000_000_000;
+    
+    // Calculate the remaining nanoseconds after the seconds are accounted for.
+    let remaining_ns = timestamp_ns % 1_000_000_000;
+
+    // Create an ISO 8601-like datetime string.
+    // Note: We're not dealing with time zones here; this is a simplified example.
+    let iso8601_datetime = format!("{}.{:09}Z", timestamp_s, remaining_ns);
+    
+    iso8601_datetime
+}
+
 include!("generated_data.rs");
 
 #[near_bindgen]
@@ -91,7 +108,7 @@ impl Contract {
                 media: Some(monster.url.into()),
                 media_hash: None,
                 copies: Some(1u64),
-                issued_at: None,
+                issued_at: Some(get_current_datetime()),
                 expires_at: None,
                 starts_at: None,
                 updated_at: None,
