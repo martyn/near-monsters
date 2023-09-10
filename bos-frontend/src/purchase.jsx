@@ -6,11 +6,10 @@ State.init({packsToBuy: null, estimatedCost: 0, error: null});
 
 const AlphaPurchase = ({ maxBuy, ftContract }) => {
   const handleInputChange = (e) => {
-    let value = 0;
-    try {
-      console.log("parsing", e.target.value);
-      value = parseInt(e.target.value, 10);
-    } catch (e) {
+    let value = parseInt(e.target.value, 10);
+    if (isNaN(value)) {
+      State.update({error:null, packsToBuy: null, estimatedCost: 0});
+      return;
     }
     if (value <= 0) {
       State.update({error:'Cannot buy less than 1 pack.'});
