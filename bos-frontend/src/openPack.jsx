@@ -2,7 +2,7 @@ const ftContract = (context.networkId === "mainnet") ? "..." : "dev-169388228430
 const nftContract = (context.networkId === "mainnet") ? "..." : "dev-1693936211939-67386471331489";
 const alphaPacksOwned = Near.view(ftContract, "ft_balance_of", {account_id: context.accountId});
 const nftsOwned = Near.view(nftContract, "nft_supply_for_owner", {account_id: context.accountId});
-const revealNfts = Near.view(nftContract, "nft_tokens", {from_index: (nftsOwned-5).toString(), limit:5});
+const revealNfts = Near.view(nftContract, "nft_tokens", {limit:50});//{from_index: (nftsOwned-5).toString(), limit:5});
 
 State.init({error: null});
 const openPack = () => {

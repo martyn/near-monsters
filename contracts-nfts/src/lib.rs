@@ -15,6 +15,8 @@ use near_sdk::{
 use near_sdk::json_types::U128;
 use near_sdk::env::random_seed;
 
+include!("generated_data.rs");
+
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
@@ -79,10 +81,14 @@ impl Contract {
     pub fn mint_random(&mut self, amount: U128, token_owner_id: AccountId) -> Vec<Token> {
         assert_eq!(env::predecessor_account_id(), AccountId::new_unchecked(MONSTERS_ALPHA_CONTRACT.into()), "Unauthorized");
         (0..amount.into()).map(|index| {
+            let monsters = get_monsters();
+            let i = index as usize;
+            let monster_index:usize = (random_seed()[i] as usize) % monsters.len();
+            let monster = &monsters[monster_index];
             let token_metadata = TokenMetadata {
-                title: Some("Placeholder card".into()),
-                description: Some("Placeholder description".into()),
-                media: None,
+                title: Some(monster.name.into()),
+                description: Some(monster.name.into()),
+                media: Some(monster.url.into()),
                 media_hash: None,
                 copies: Some(1u64),
                 issued_at: None,
@@ -94,9 +100,8 @@ impl Contract {
                 reference_hash: None,
             };
 
-            let i = index as usize;
             let last_four = &(random_seed()[i..(4+i)]);
-            let card_id = "000";
+            let card_id = format!("{}", monster_index);
             let set = "0";
             let rand_id = last_four
                 .iter()
