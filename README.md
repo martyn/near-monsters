@@ -1,8 +1,8 @@
-![NEAR monsters logo](logo.jpeg)
+![NEAR Monsters logo](logo.jpeg)
 
 # About
 
-NEAR monsters is a collectible trading card game on the NEAR blockchain. It is currently on testnet only.
+NEAR Monsters is a collectible trading card game on the NEAR blockchain. It is currently on testnet only.
 
 # Project components
 

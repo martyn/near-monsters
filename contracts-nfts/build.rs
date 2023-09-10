@@ -15,6 +15,7 @@ fn main() {
     writeln!(f, "pub struct MonsterTemplate<'a> {{").unwrap();
     writeln!(f, "    pub name: &'a str,").unwrap();
     writeln!(f, "    pub url: &'a str,").unwrap();
+    writeln!(f, "    pub rarity: &'a str,").unwrap();
     writeln!(f, "}}").unwrap();
 
     // Parse the CSV and generate an array of MonsterTemplates
@@ -24,9 +25,10 @@ fn main() {
     let mut rdr = csv::Reader::from_path("monsters.csv").unwrap();
     for result in rdr.records() {
         let record = result.unwrap();
-        let name = &record[0];
-        let url = &record[1];
-        writeln!(f, "        MonsterTemplate {{ name: \"{}\", url: \"{}\" }},", name, url).unwrap();
+        let name = &record[1];
+        let url = &record[0];
+        let rarity = &record[2];
+        writeln!(f, "        MonsterTemplate {{ name: \"{}\", url: \"{}\", rarity: \"{}\"}},", name, url, rarity).unwrap();
     }
 
     writeln!(f, "    ]").unwrap();

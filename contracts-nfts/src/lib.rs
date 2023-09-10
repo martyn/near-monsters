@@ -87,7 +87,7 @@ impl Contract {
             let monster = &monsters[monster_index];
             let token_metadata = TokenMetadata {
                 title: Some(monster.name.into()),
-                description: Some(monster.name.into()),
+                description: Some(monster.rarity.into()),
                 media: Some(monster.url.into()),
                 media_hash: None,
                 copies: Some(1u64),
