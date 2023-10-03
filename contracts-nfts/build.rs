@@ -12,6 +12,8 @@ fn main() {
     let mut f = File::create(&dest_path).unwrap();
 
     // Write the struct definition
+    writeln!(f, "use near_sdk::serde::Serialize;").unwrap();
+    writeln!(f, "#[derive(Debug, Serialize)]").unwrap();
     writeln!(f, "pub struct MonsterTemplate<'a> {{").unwrap();
     writeln!(f, "    pub name: &'a str,").unwrap();
     writeln!(f, "    pub url: &'a str,").unwrap();
