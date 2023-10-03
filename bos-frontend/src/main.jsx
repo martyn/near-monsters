@@ -90,12 +90,24 @@ const Header = () => {
 };
 
 const Home = () => {
-  return <div>About</div>
-}
+  return <div>About</div>;
+};
+const Inventory = () => {
+  return <div>Inventory</div>;
+};
+const Game = () => {
+  return <div>Play game</div>;
+};
+const Marketplace = () => {
+  return <div>Marketplace</div>;
+};
 const MainSection = () => (
   <div className="main">
     <div className="featured-pack">
-    {state.activeSection === "home" && <Home/>}
+      {state.activeSection === "home" && <Home />}
+      {state.activeSection === "inventory" && <Inventory />}
+      {state.activeSection === "play" && <Game />}
+      {state.activeSection === "marketplace" && <Marketplace />}
     </div>
   </div>
 );
