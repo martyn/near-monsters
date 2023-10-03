@@ -13,9 +13,13 @@ const Nav = styled.div`
     list-style-type: none;
     margin: 0;
     padding: 0;
+    .selected {
+      text-decoration:underline;
+    }
     
     li {
       margin: 0 10px;
+      cursor: pointer;
 
       a {
         text-decoration: none;
@@ -37,32 +41,61 @@ const StyledHeader = styled.div`
   padding: 10px 50px;
   box-shadow: 0 2px 10px var(--blackA7);
 `;
-const Header = () => (
-  <StyledHeader>
-    <Logo>NEAR Monsters</Logo>
-    <Nav>
-      <ul>
-        <li>
-          <a href="#purchase-alpha">Purchase ALPHA</a>
-        </li>
-        <li>
-          <a href="#inventory">Inventory</a>
-        </li>
-        <li>
-          <a href="#play-game">Play</a>
-        </li>
-        <li>
-          <a href="#marketplace">Marketplace</a>
-        </li>
-      </ul>
-    </Nav>
-  </StyledHeader>
-);
 
+State.init({
+  activeSection: "home",
+});
+
+const NavItem = ({ section, label }) => {
+  const navClassName = (section) => {
+    // Your logic to determine the className here
+    return state.activeSection === section ? "selected" : "";
+  };
+
+  const selectSection = (section) => {
+    State.update({ ...state, activeSection: section });
+  };
+
+  return (
+    <li onClick={() => selectSection(section)}>
+      <a className={navClassName(section)}>{label}</a>
+    </li>
+  );
+};
+
+const Header = () => {
+  return (
+    <StyledHeader>
+      <Logo>NEAR Monsters</Logo>
+      <Nav>
+        <ul>
+          <NavItem section="purchase-alpha" label="Purchase ALPHA" />
+          <NavItem section="inventory" label="Inventory" />
+          <NavItem section="play" label="Play Game" />
+          <NavItem section="marketplace" label="Trade" />
+          <li>
+            <Widget
+              src="mob.near/widget/ProfileImage"
+              props={{
+                profile,
+                accountId,
+                className: "float-start d-inline-block me-2",
+              }}
+            />
+          </li>
+        </ul>
+      </Nav>
+    </StyledHeader>
+  );
+};
+
+const Home = () => {
+  return <div>About</div>
+}
 const MainSection = () => (
   <div className="main">
     <div className="featured-pack">
-      {/* Display your AI-generated artwork and details */}
+    {state.activeSection === "home" && <Home/>}
     </div>
   </div>
 );
