@@ -103,46 +103,6 @@ const Home = () => {
         src="https://nearmonsters.s3.us-west-004.backblazeb2.com/web/OIG.jpeg"
         width="256"
       />
-      "
-      <p>
-        Welcome! You've embarked on a path that few dare to venture - striving
-        towards becoming an esteemed NEAR Monster Master; guardian of the
-        magnificent creatures that populate this realm. However, be warned – it
-        is not merely recreation but rather an immense responsibility and
-        commitment you undertake.
-      </p>
-      <p>
-        These near monsters are no ordinary digital entities - they possess
-        sentience with unique personalities, histories, emotions; hopes & fears
-        intertwined in their very being. They will trust only those who prove
-        themselves worthy of it, love exclusively when deservedly earned and
-        remember eternally any transgression committed against them or the bond
-        shared between you both!
-      </p>
-      <p>
-        Do not forget that these near monsters are mortal; like everything else
-        within this world - they too shall perish one day. But take heart in
-        knowing there exists a way to honor their memory, immortalising their
-        spirit for eternity: by creating an NFT of your cherished NEAR Monster!
-      </p>
-      <p>
-        An NFT is forever – unlike the transient material realm; it's original -
-        standing apart from replicas within virtual worlds and most importantly
-        precious beyond measure. It serves as a beautiful testament to the bond
-        shared between you both, an unbreakable tether that outlives even
-        mortality itself!
-      </p>
-      <p>
-        Treasure these NFT’s but do not cling onto them; gift them if your heart
-        desires however never trade or barter their worth away and collect for
-        sentimental value rather than materialistic gain. This is the true way
-        of a NEAR Monster Master, as taught by our wise sensei – may you find
-        peace & harmony throughout this incredible journey! Farewell brave one;
-        let your path be illuminated with joy from newfound friendships and
-        eternal love forged between mankind's most fantastical creations - NEAR
-        Monsters.
-      </p>
-      " - Grand Sensei
     </div>
   );
 };

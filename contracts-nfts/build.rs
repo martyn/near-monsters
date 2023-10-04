@@ -12,8 +12,11 @@ fn main() {
     let mut f = File::create(&dest_path).unwrap();
 
     // Write the struct definition
+    writeln!(f, "use near_sdk::serde::Deserialize;").unwrap();
     writeln!(f, "use near_sdk::serde::Serialize;").unwrap();
-    writeln!(f, "#[derive(Debug, Serialize)]").unwrap();
+    writeln!(f, "#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]").unwrap();
+    writeln!(f, "#[cfg_attr(feature = \"abi\", derive(schemars::JsonSchema))]").unwrap();
+    writeln!(f, "#[serde(crate = \"near_sdk::serde\")]").unwrap();
     writeln!(f, "pub struct MonsterTemplate<'a> {{").unwrap();
     writeln!(f, "    pub name: &'a str,").unwrap();
     writeln!(f, "    pub url: &'a str,").unwrap();
