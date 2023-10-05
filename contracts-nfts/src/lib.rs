@@ -131,14 +131,9 @@ impl Contract {
         }).collect()
     }
 
-    pub fn full_set_listing(&mut self) -> Vec<MonsterTemplate> {
-        //get_monsters()
-        vec![MonsterTemplate{name: "test", url: "url", rarity: "rare"}]
+    pub fn full_set_listing(&self) -> Vec<MonsterTemplate> {
+        get_monsters()
     }
-    pub fn full_set_listing_test(&mut self) -> U128 {
-        U128(0)
-    }
-
 }
 
 #[near_bindgen]
