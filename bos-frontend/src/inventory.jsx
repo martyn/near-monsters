@@ -70,24 +70,6 @@ return (
         </select>
       </div>
 
-      <div>
-        <label>Type:</label>
-        {["Undead", "Mage", "Demon", "Beast", "Warrior", "Spirit", "Elemental", "Vampire", "Celestial"].map((type) => (
-          <div key={type}>
-            <input 
-              type="checkbox" 
-              checked={false}
-              onChange={() => {
-                //const newTypeFilter = typeFilter.includes(type)
-                //  ? typeFilter.filter(t => t !== type)
-                //  : [...typeFilter, type];
-                //setTypeFilter(newTypeFilter);
-              }}
-            />
-            {type}
-          </div>
-        ))}
-      </div>
     </FilterPane>
     <CardGrid>
       {fullSetList.map((item, index) => (

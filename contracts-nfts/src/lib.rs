@@ -41,8 +41,28 @@ fn get_token_id(set:&str, card_id:usize, card_count:u64) -> String {
 fn get_token_prefix(set:&str, card_id:usize) -> String {
     format!("{}-{}", set, card_id)
 }
-
 include!("generated_data.rs");
+
+pub fn get_rare_monsters<'a>() -> Vec<MonsterTemplate<'a>> {
+    get_monsters()
+        .into_iter()
+        .filter(|monster| monster.rarity == "Rare")
+        .collect()
+}
+
+pub fn get_uncommon_monsters<'a>() -> Vec<MonsterTemplate<'a>> {
+    get_monsters()
+        .into_iter()
+        .filter(|monster| monster.rarity == "Uncommon")
+        .collect()
+}
+
+pub fn get_common_monsters<'a>() -> Vec<MonsterTemplate<'a>> {
+    get_monsters()
+        .into_iter()
+        .filter(|monster| monster.rarity == "Common")
+        .collect()
+}
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -109,9 +129,16 @@ impl Contract {
     pub fn mint_random(&mut self, amount: U128, token_owner_id: AccountId) -> Vec<Token> {
         assert_eq!(env::predecessor_account_id(), AccountId::new_unchecked(MONSTERS_ALPHA_CONTRACT.into()), "Unauthorized");
         (0..amount.into()).map(|index| {
-            let monsters = get_monsters();
             let i = index as usize;
-            let monster_index:usize = (random_seed()[i] as usize) % monsters.len();
+            let roll = random_seed()[i] as usize;
+            let monsters = if roll < 28 {
+                get_rare_monsters()
+            } else if roll < 89 {
+                get_uncommon_monsters()
+            } else {
+                get_common_monsters()
+            };
+            let monster_index:usize = random_seed()[i+1] as usize % monsters.len();
             let monster = &monsters[monster_index];
             let set = "0";
             let token_prefix = get_token_prefix(set, monster_index);
