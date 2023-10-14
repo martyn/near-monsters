@@ -18,7 +18,7 @@ use near_sdk::{
 const MONSTERS_NFT_CONTRACT: &str = "monsters_nfts.near";
 
 #[cfg(not(feature = "use_prod_chain"))]
-const MONSTERS_NFT_CONTRACT: &str = "dev-1697260781994-51132633172656";
+const MONSTERS_NFT_CONTRACT: &str = "dev-1697311460688-92526053453432";
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]

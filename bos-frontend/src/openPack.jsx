@@ -1,5 +1,5 @@
 const ftContract = (context.networkId === "mainnet") ? "..." : "dev-1693882284306-75813657022630";
-const nftContract = (context.networkId === "mainnet") ? "..." : "dev-1697260781994-51132633172656";
+const nftContract = (context.networkId === "mainnet") ? "..." : "dev-1697311460688-92526053453432";
 const alphaPacksOwned = Near.view(ftContract, "ft_balance_of", {account_id: context.accountId});
 const isOpenDisabled = (alphaPacksOwned === 0);
 const nftsOwned = Near.view(nftContract, "nft_supply_for_owner", {account_id: context.accountId});
@@ -38,7 +38,7 @@ return (
       </h3>
       <ul>
       {
-        revealNfts.map((nft) => <li><img src={nft.metadata.media} width={128}/>{nft.metadata.title} {nft.metadata.description}</li>)
+        revealNfts.map((nft) => <li><img src={nft.metadata.media} width={128}/>{nft.metadata.title} {nft.metadata.description} {nft.metadata.extra.rarity}</li>)
       }
       </ul>
       <div>

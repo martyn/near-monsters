@@ -1,4 +1,4 @@
-const nftContract = (context.networkId === "mainnet") ? "..." : "dev-1697260781994-51132633172656";
+const nftContract = (context.networkId === "mainnet") ? "..." : "dev-1697311460688-92526053453432";
 const fullSetList = Near.view(nftContract, "full_set_listing", {});
 const nftsOwned = Near.view(nftContract, "nft_tokens_for_owner", {account_id: context.accountId, limit:50000});//{from_index: (nftsOwned-5).toString(), limit:5});
 const ownedCount = nftsOwned.reduce((acc, nft) => {
@@ -80,7 +80,7 @@ return (
           <Card key={index}>
             <CardName>{item.name} - {item.rarity}</CardName>
             <CardImage src={item.url} />
-            <div>Copies Owned: {ownedCount[index] || 0}</div>
+            <div>Copies Owned: {ownedCount[parseInt(item.id, 10)] || 0}</div>
           </Card>
       ))}
     </CardGrid>
