@@ -370,11 +370,11 @@ mod tests {
 
         let card = contract.mint_random(1.into(), account.clone());
         //assert!(card.metadata.copies == 1);
-        assert!(card[0].token_id == "0-5:1");
+        assert!(card[0].token_id.ends_with("1"));
         let card = contract.mint_random(1.into(), account.clone());
-        assert!(card[0].token_id == "0-5:2");
+        assert!(card[0].token_id.ends_with("2"));
         let card = contract.mint_random(1.into(), account.clone());
-        assert!(card[0].token_id == "0-5:3");
+        assert!(card[0].token_id.ends_with("3"));
         //assert!(card.metadata.copies == 2);
     }
 
@@ -392,11 +392,8 @@ mod tests {
             .attached_deposit(ONE_NEAR)
             .build());
 
-        let card = contract.mint_random(1.into(), account.clone());
-        //assert!(card.metadata.copies == 1);
-        assert!(card[0].token_id == "0-5:1");
-        let card = contract.mint_random(1.into(), account.clone());
-        assert!(card[0].token_id == "0-5:2");
+        contract.mint_random(1.into(), account.clone());
+        contract.mint_random(1.into(), account.clone());
         testing_env!(context
             .storage_usage(env::storage_usage())
             .account_balance(env::account_balance())

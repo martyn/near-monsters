@@ -15,56 +15,34 @@ fn main() {
     writeln!(f, "#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]").unwrap();
     writeln!(f, "#[cfg_attr(feature = \"abi\", derive(schemars::JsonSchema))]").unwrap();
     writeln!(f, "#[serde(crate = \"near_sdk::serde\")]").unwrap();
-    writeln!(f, "pub struct NFTCardTemplate<'a> {{").unwrap();
-    writeln!(f, "    pub id: &'a str,").unwrap();
-    writeln!(f, "    pub name: &'a str,").unwrap();
-    writeln!(f, "    pub url: &'a str,").unwrap();
-    writeln!(f, "    pub rarity: &'a str,").unwrap();
-    writeln!(f, "    pub description: &'a str,").unwrap();
-    writeln!(f, "    pub types: &'a str,").unwrap();
-    writeln!(f, "    pub alignment: &'a str,").unwrap();
-    writeln!(f, "    pub governance_style: &'a str,").unwrap();
-    writeln!(f, "    pub attack: &'a str,").unwrap();
-    writeln!(f, "    pub defense: &'a str,").unwrap();
-    writeln!(f, "    pub power_score: &'a str,").unwrap();
-    writeln!(f, "    pub mana: &'a str,").unwrap();
-    writeln!(f, "}}").unwrap();
 
+    let mut rdr = csv::Reader::from_path("cards.csv").unwrap();
+
+    // Extract headers from CSV to dynamically generate the struct
+    let headers = rdr.headers().unwrap();
+    writeln!(f, "pub struct NFTCardTemplate<'a> {{").unwrap();
+    for header in headers.iter() {
+        writeln!(f, "    pub {}: &'a str,", header).unwrap();
+    }
+    writeln!(f, "}}\n").unwrap();
     let mut rdr = csv::Reader::from_path("cards.csv").unwrap();
     let record_count = rdr.records().count();
 
     let mut rdr = csv::Reader::from_path("cards.csv").unwrap();
     writeln!(f, "const NFT_CARDS: [NFTCardTemplate; {}] = [", record_count).unwrap();
+
+    // Populate struct instances dynamically using headers
     for result in rdr.records() {
         let record = result.unwrap();
-        let _id = &record[0];
-        let name = &record[1];
-        let description = &record[2];
-        let rarity = &record[3];
-        let types = &record[4];
-        let alignment = &record[5];
-        let governance_style = &record[6];
-        let attack = &record[7];
-        let defense = &record[8];
-        let power_score = &record[9];
-        let mana = &record[10];
-        let url = &record[11];
 
-        writeln!(f, "        NFTCardTemplate {{ 
-            id: \"{}\",
-            name: \"{}\", 
-            description: \"{}\", 
-            rarity: \"{}\", 
-            types: \"{}\", 
-            alignment: \"{}\", 
-            governance_style: \"{}\", 
-            attack: \"{}\", 
-            defense: \"{}\", 
-            power_score: \"{}\", 
-            mana: \"{}\", 
-            url: \"{}\" 
-        }},", _id, name, description, rarity, types, alignment, governance_style, attack, defense, power_score, mana, url).unwrap();
+        write!(f, "    NFTCardTemplate {{").unwrap();
+        for (index, header) in headers.iter().enumerate() {
+            let value = &record[index];
+            write!(f, "        {}: \"{}\",", header, value).unwrap();
+        }
+        writeln!(f, "    }},").unwrap();
     }
+
     writeln!(f, "];").unwrap();
 
 
