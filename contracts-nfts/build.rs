@@ -16,7 +16,8 @@ fn main() {
     writeln!(f, "#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]").unwrap();
     writeln!(f, "#[cfg_attr(feature = \"abi\", derive(schemars::JsonSchema))]").unwrap();
     writeln!(f, "#[serde(crate = \"near_sdk::serde\")]").unwrap();
-    writeln!(f, "pub struct MonsterTemplate<'a> {{").unwrap();
+    writeln!(f, "pub struct NFTCardTemplate<'a> {{").unwrap();
+    writeln!(f, "    pub id: &'a str,").unwrap();
     writeln!(f, "    pub name: &'a str,").unwrap();
     writeln!(f, "    pub url: &'a str,").unwrap();
     writeln!(f, "    pub rarity: &'a str,").unwrap();
@@ -24,51 +25,61 @@ fn main() {
     writeln!(f, "    pub types: &'a str,").unwrap();
     writeln!(f, "    pub alignment: &'a str,").unwrap();
     writeln!(f, "    pub governance_style: &'a str,").unwrap();
-    writeln!(f, "    pub visual_quality: &'a str,").unwrap();
     writeln!(f, "    pub attack: &'a str,").unwrap();
     writeln!(f, "    pub defense: &'a str,").unwrap();
     writeln!(f, "    pub power_score: &'a str,").unwrap();
     writeln!(f, "    pub mana: &'a str,").unwrap();
     writeln!(f, "}}").unwrap();
 
+    let mut rdr = csv::Reader::from_path("cards.csv").unwrap();
+    let record_count = rdr.records().count();
 
-    // Parse the CSV and generate an array of MonsterTemplates
-    writeln!(f, "pub fn get_monsters<'a>() -> Vec<MonsterTemplate<'a>> {{").unwrap();
-    writeln!(f, "    vec![").unwrap();
-
-    let mut rdr = csv::Reader::from_path("monsters.csv").unwrap();
+    let mut rdr = csv::Reader::from_path("cards.csv").unwrap();
+    writeln!(f, "const NFT_CARDS: [NFTCardTemplate; {}] = [", record_count).unwrap();
     for result in rdr.records() {
         let record = result.unwrap();
-        let name = &record[0];
-        let description = &record[1];
-        let rarity = &record[2];
-        let types = &record[3];
-        let alignment = &record[4];
-        let governance_style = &record[5];
-        let visual_quality = &record[6];
+        let _id = &record[0];
+        let name = &record[1];
+        let description = &record[2];
+        let rarity = &record[3];
+        let types = &record[4];
+        let alignment = &record[5];
+        let governance_style = &record[6];
         let attack = &record[7];
         let defense = &record[8];
         let power_score = &record[9];
         let mana = &record[10];
         let url = &record[11];
 
-        writeln!(f, "        MonsterTemplate {{ 
+        writeln!(f, "        NFTCardTemplate {{ 
+            id: \"{}\",
             name: \"{}\", 
             description: \"{}\", 
             rarity: \"{}\", 
             types: \"{}\", 
             alignment: \"{}\", 
             governance_style: \"{}\", 
-            visual_quality: \"{}\", 
             attack: \"{}\", 
             defense: \"{}\", 
             power_score: \"{}\", 
             mana: \"{}\", 
             url: \"{}\" 
-        }},", name, description, rarity, types, alignment, governance_style, visual_quality, attack, defense, power_score, mana, url).unwrap();
+        }},", _id, name, description, rarity, types, alignment, governance_style, attack, defense, power_score, mana, url).unwrap();
     }
+    writeln!(f, "];").unwrap();
 
-    writeln!(f, "    ]").unwrap();
+
+    writeln!(f, "pub fn get_nft_card_map<'a>() -> HashMap<&'a str, NFTCardTemplate<'a>> {{").unwrap();
+    writeln!(f, "    let mut nft_card_map: HashMap<&str, NFTCardTemplate> = HashMap::new();").unwrap();
+    writeln!(f, "    for card in NFT_CARDS.iter().cloned() {{").unwrap();
+    writeln!(f, "        nft_card_map.insert(card.id, card);").unwrap();
+    writeln!(f, "    }}").unwrap();
+    writeln!(f, "    nft_card_map").unwrap();
+    writeln!(f, "}}").unwrap();
+
+
+    writeln!(f, "pub fn get_nft_card_list<'a>() -> &'a [NFTCardTemplate<'a>] {{").unwrap();
+    writeln!(f, "    &NFT_CARDS").unwrap();
     writeln!(f, "}}").unwrap();
 }
 

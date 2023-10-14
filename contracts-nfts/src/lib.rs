@@ -43,25 +43,24 @@ fn get_token_prefix(set:&str, card_id:usize) -> String {
 }
 include!("generated_data.rs");
 
-pub fn get_rare_monsters<'a>() -> Vec<MonsterTemplate<'a>> {
-    get_monsters()
-        .into_iter()
-        .filter(|monster| monster.rarity == "Rare")
+pub fn get_nft_cards_by_rarity<'a>(rarity: &str) -> Vec<NFTCardTemplate<'a>> {
+    get_nft_card_list()
+        .iter()
+        .filter(|&card| card.rarity == rarity)
+        .cloned()
         .collect()
 }
 
-pub fn get_uncommon_monsters<'a>() -> Vec<MonsterTemplate<'a>> {
-    get_monsters()
-        .into_iter()
-        .filter(|monster| monster.rarity == "Uncommon")
-        .collect()
+pub fn get_rare_nft_cards<'a>() -> Vec<NFTCardTemplate<'a>> {
+    get_nft_cards_by_rarity("Rare")
 }
 
-pub fn get_common_monsters<'a>() -> Vec<MonsterTemplate<'a>> {
-    get_monsters()
-        .into_iter()
-        .filter(|monster| monster.rarity == "Common")
-        .collect()
+pub fn get_uncommon_nft_cards<'a>() -> Vec<NFTCardTemplate<'a>> {
+    get_nft_cards_by_rarity("Uncommon")
+}
+
+pub fn get_common_nft_cards<'a>() -> Vec<NFTCardTemplate<'a>> {
+    get_nft_cards_by_rarity("Common")
 }
 
 #[near_bindgen]
@@ -132,11 +131,11 @@ impl Contract {
             let i = index as usize;
             let roll = random_seed()[i] as usize;
             let monsters = if roll < 28 {
-                get_rare_monsters()
+                get_rare_nft_cards()
             } else if roll < 89 {
-                get_uncommon_monsters()
+                get_uncommon_nft_cards()
             } else {
-                get_common_monsters()
+                get_common_nft_cards()
             };
             let monster_index:usize = random_seed()[i+1] as usize % monsters.len();
             let monster = &monsters[monster_index];
@@ -183,8 +182,8 @@ impl Contract {
         }).collect()
     }
 
-    pub fn full_set_listing(&self) -> Vec<MonsterTemplate> {
-        get_monsters()
+    pub fn full_set_listing(&self) -> Vec<NFTCardTemplate> {
+        get_nft_card_list().to_vec()
     }
 
 }
