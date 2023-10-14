@@ -103,49 +103,44 @@ impl Contract {
         }
     }
 
-    //TODO test, guard from unauthorized calls
-    fn mint_card(&mut self, index:u128, token_owner_id: AccountId) -> Token {
-        let monsters = get_monsters();
-        let i = index as usize;
-        let monster_index:usize = (random_seed()[i] as usize) % monsters.len();
-        let monster = &monsters[monster_index];
-        let set = "0";
-        let token_prefix = get_token_prefix(set, monster_index);
-        let card_count: u64 = match &self.copies_by_token_prefix {
-            Some(copies) => {
-                copies.get(&token_prefix).map_or(1, |count| count + 1)
-            },
-            None => 1,
-        };
-        let token_id = get_token_id(set, monster_index, card_count);
-        let token_metadata = TokenMetadata {
-            title: Some(monster.name.into()),
-            description: Some(monster.rarity.into()),
-            media: Some(monster.url.into()),
-            media_hash: None,
-            copies: Some(card_count),
-            issued_at: Some(get_current_datetime()),
-            expires_at: None,
-            starts_at: None,
-            updated_at: None,
-            extra: None,
-            reference: None,
-            reference_hash: None,
-        };
-
-        log!("Creating card with token_id {}", token_id);
-        if let Some(copies_count) = &mut self.copies_by_token_prefix {
-            copies_count.insert(&token_prefix, &card_count);
-        }
-        self.tokens.internal_mint(token_id.into(), token_owner_id.clone(), Some(token_metadata))
-        //TODO increment copies
-    }
-
-    #[private]
+    #[payable]
     pub fn mint_random(&mut self, amount: U128, token_owner_id: AccountId) -> Vec<Token> {
         assert_eq!(env::predecessor_account_id(), AccountId::new_unchecked(MONSTERS_ALPHA_CONTRACT.into()), "Unauthorized");
         (0..amount.into()).map(|index| {
-            self.mint_card(index, token_owner_id.clone())
+            let monsters = get_monsters();
+            let i = index as usize;
+            let monster_index:usize = (random_seed()[i] as usize) % monsters.len();
+            let monster = &monsters[monster_index];
+            let set = "0";
+            let token_prefix = get_token_prefix(set, monster_index);
+            let card_count: u64 = match &self.copies_by_token_prefix {
+                Some(copies) => {
+                    copies.get(&token_prefix).map_or(1, |count| count + 1)
+                },
+                None => 1,
+            };
+            let token_id = get_token_id(set, monster_index, card_count);
+            let token_metadata = TokenMetadata {
+                title: Some(monster.name.into()),
+                description: Some(monster.rarity.into()),
+                media: Some(monster.url.into()),
+                media_hash: None,
+                copies: Some(card_count),
+                issued_at: Some(get_current_datetime()),
+                expires_at: None,
+                starts_at: None,
+                updated_at: None,
+                extra: None,
+                reference: None,
+                reference_hash: None,
+            };
+
+            log!("Creating card with token_id {}", token_id);
+            if let Some(copies_count) = &mut self.copies_by_token_prefix {
+                copies_count.insert(&token_prefix, &card_count);
+            }
+            self.tokens.internal_mint(token_id.into(), token_owner_id.clone(), Some(token_metadata))
+
         }).collect()
     }
 
@@ -266,10 +261,11 @@ mod tests {
     }
 
     #[test]
-    fn test_mint_card_initial() {
-        let mut context = get_context(accounts(0));
+    fn test_mint_random() {
+        let account = AccountId::new_unchecked(MONSTERS_ALPHA_CONTRACT.into());
+        let mut context = get_context(account.clone());
         testing_env!(context.build());
-        let mut contract = Contract::new_default_meta(accounts(0).into());
+        let mut contract = Contract::new_default_meta(account.clone().into());
 
         testing_env!(context
             .storage_usage(env::storage_usage())
@@ -278,13 +274,13 @@ mod tests {
             .attached_deposit(ONE_NEAR)
             .build());
 
-        let card = contract.mint_card(0, accounts(0));
+        let card = contract.mint_random(1.into(), account.clone());
         //assert!(card.metadata.copies == 1);
-        assert!(card.token_id == "0-0:1");
-        let card = contract.mint_card(0, accounts(0));
-        assert!(card.token_id == "0-0:2");
-        let card = contract.mint_card(0, accounts(0));
-        assert!(card.token_id == "0-0:3");
+        assert!(card[0].token_id == "0-0:1");
+        let card = contract.mint_random(1.into(), account.clone());
+        assert!(card[0].token_id == "0-0:2");
+        let card = contract.mint_random(1.into(), account.clone());
+        assert!(card[0].token_id == "0-0:3");
         //assert!(card.metadata.copies == 2);
     }
 

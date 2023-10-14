@@ -1,5 +1,5 @@
 const ftContract = (context.networkId === "mainnet") ? "..." : "dev-1693882284306-75813657022630";
-const nftContract = (context.networkId === "mainnet") ? "..." : "dev-1693936211939-67386471331489";
+const nftContract = (context.networkId === "mainnet") ? "..." : "dev-1697260781994-51132633172656";
 const alphaPacksOwned = Near.view(ftContract, "ft_balance_of", {account_id: context.accountId});
 const isOpenDisabled = (alphaPacksOwned === 0);
 const nftsOwned = Near.view(nftContract, "nft_supply_for_owner", {account_id: context.accountId});
