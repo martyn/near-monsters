@@ -1,9 +1,16 @@
-const nftContract = (context.networkId === "mainnet") ? "..." : "dev-1693936211939-67386471331489";
+const nftContract = (context.networkId === "mainnet") ? "..." : "dev-1697260781994-51132633172656";
 const fullSetList = Near.view(nftContract, "full_set_listing", {});
 const nftsOwned = Near.view(nftContract, "nft_tokens_for_owner", {account_id: context.accountId, limit:50000});//{from_index: (nftsOwned-5).toString(), limit:5});
-console.log("--", nftsOwned);
-console.log("++", fullSetList);
-State.init({error: null});
+const ownedCount = nftsOwned.reduce((acc, nft) => {
+  // Extract the token ID's numerical part
+  const tokenId = parseInt(nft.token_id.split('-')[1].split(':')[0], 10);
+
+  // Initialize or increment the count for the token ID
+  acc[tokenId] = (acc[tokenId] || 0) + 1;
+
+  return acc;
+}, {});
+State.init({error: null, owned: "all"});
 
 const Container = styled.div`
   display: flex;
@@ -41,7 +48,7 @@ const CardImage = styled.img`
 `;
 
 function setOwnedFilter(value) {
-  console.log("Set owned filter", value);
+  State.update({ ...state, owned: value });
 }
 function setRarityFilter(value) {
   console.log("Set rarity filter", value);
@@ -88,11 +95,12 @@ return (
     </FilterPane>
     <CardGrid>
       {fullSetList.map((item, index) => (
-        <Card key={index}>
-          <CardName>{item.name} - {item.rarity}</CardName>
-          <CardImage src={item.url} />
-          <div>Copies Owned: {item.copies}</div>
-        </Card>
+        ((state.owned == "owned" && (ownedCount[index] || 0) > 0) || state.owned == "all") &&
+          <Card key={index}>
+            <CardName>{item.name} - {item.rarity}</CardName>
+            <CardImage src={item.url} />
+            <div>Copies Owned: {ownedCount[index] || 0}</div>
+          </Card>
       ))}
     </CardGrid>
   </Container>
