@@ -38,9 +38,6 @@ fn get_current_datetime() -> String {
 fn get_token_id(set:&str, card_id:&str, card_count:u64) -> String {
     format!("{}-{}:{}", set, card_id, card_count)
 }
-fn get_token_prefix(set:&str, card_id:usize) -> String {
-    format!("{}-{}", set, card_id)
-}
 include!("generated_data.rs");
 
 pub fn get_nft_cards_by_rarity<'a>(rarity: &str) -> Vec<NFTCardTemplate<'a>> {
@@ -72,43 +69,12 @@ pub fn get_nft_card_map<'a>() -> HashMap<String, NFTCardTemplate<'a>> {
     nft_card_map
 }
 
-fn enrich_token_with_card_data(token: &mut Token) {
-    let card_id = token.token_id.split(':')
-        .next()
-        .unwrap()
-        .rsplit('-')
-        .next()
-        .map(|s| s.to_string());
-	let nft_card_map = get_nft_card_map(); // Assuming this function is accessible here
-    if let Some(card) = nft_card_map.get(&card_id.unwrap()) {
-        let existing_metadata = token.metadata.clone().unwrap_or_default(); // Replace with appropriate logic
-
-        let token_metadata = TokenMetadata {
-            title: Some(card.name.to_string()),
-            description: Some(card.description.to_string()),
-            media: Some(card.url.to_string()),
-            media_hash: None,
-            copies: Some(1u64),  // we can look this up later
-            issued_at: existing_metadata.issued_at,
-            expires_at: None,
-            starts_at: None,
-            updated_at: None,
-            extra: None,
-            reference: None,
-            reference_hash: None,
-        };
-
-        token.metadata = Some(token_metadata);
-    }
-}
-
-
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
     tokens: NonFungibleToken,
     metadata: LazyOption<NFTContractMetadata>,
-    copies_by_token_prefix: Option<LookupMap<TokenId, u64>>,
+    copies_by_card_id: Option<LookupMap<String, u64>>,
 }
 
 const DATA_IMAGE_SVG_NEAR_ICON: &str = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 288 288'%3E%3Cg id='l' data-name='l'%3E%3Cpath d='M187.58,79.81l-30.1,44.69a3.2,3.2,0,0,0,4.75,4.2L191.86,103a1.2,1.2,0,0,1,2,.91v80.46a1.2,1.2,0,0,1-2.12.77L102.18,77.93A15.35,15.35,0,0,0,90.47,72.5H87.34A15.34,15.34,0,0,0,72,87.84V201.16A15.34,15.34,0,0,0,87.34,216.5h0a15.35,15.35,0,0,0,13.08-7.31l30.1-44.69a3.2,3.2,0,0,0-4.75-4.2L96.14,186a1.2,1.2,0,0,1-2-.91V104.61a1.2,1.2,0,0,1,2.12-.77l89.55,107.23a15.35,15.35,0,0,0,11.71,5.43h3.13A15.34,15.34,0,0,0,216,201.16V87.84A15.34,15.34,0,0,0,200.66,72.5h0A15.35,15.35,0,0,0,187.58,79.81Z'/%3E%3C/g%3E%3C/svg%3E";
@@ -160,7 +126,7 @@ impl Contract {
                 Some(StorageKey::Approval),
             ),
             metadata: LazyOption::new(StorageKey::Metadata, Some(&metadata)),
-            copies_by_token_prefix: Some(LookupMap::new(b"m"))
+            copies_by_card_id: Some(LookupMap::new(b"m"))
         }
     }
 
@@ -180,23 +146,13 @@ impl Contract {
             let card_index:usize = random_seed()[i+1] as usize % cards.len();
             let card = &cards[card_index];
             let set = "0";
-            let token_prefix = get_token_prefix(set, card_index);
-            let card_count: u64 = match &self.copies_by_token_prefix {
+            let card_count: u64 = match &self.copies_by_card_id {
                 Some(copies) => {
-                    copies.get(&token_prefix).map_or(1, |count| count + 1)
+                    copies.get(&card.id.to_string()).map_or(1, |count| count + 1)
                 },
                 None => 1,
             };
             let token_id = get_token_id(set, card.id, card_count);
-
-            let mut json_value: serde_json::Value = serde_json::to_value(&card).unwrap();
-            let obj = json_value.as_object_mut().unwrap();
-
-            obj.remove("name");
-            obj.remove("url");
-            obj.remove("description");
-
-            let extra = Some(serde_json::to_string(&json_value).unwrap());
 
             let token_metadata = TokenMetadata {
                 title: None,
@@ -214,8 +170,8 @@ impl Contract {
             };
 
             log!("Creating card with token_id {}", token_id);
-            if let Some(copies_count) = &mut self.copies_by_token_prefix {
-                copies_count.insert(&token_prefix, &card_count);
+            if let Some(copies_count) = &mut self.copies_by_card_id {
+                copies_count.insert(&card.id.to_string(), &card_count);
             }
             self.tokens.internal_mint(token_id.into(), token_owner_id.clone(), Some(token_metadata))
 
@@ -224,6 +180,52 @@ impl Contract {
 
     pub fn full_set_listing(&self) -> Vec<NFTCardTemplate> {
         get_nft_card_list().to_vec()
+    }
+
+    fn enrich_token_with_card_data(&self, token: &mut Token) {
+        let card_id = token.token_id.split(':')
+            .next()
+            .unwrap()
+            .rsplit('-')
+            .next()
+            .map(|s| s.to_string())
+            .unwrap();
+        let card_count: u64 = match &self.copies_by_card_id {
+            Some(copies) => {
+                copies.get(&card_id).map_or(1, |count| count)
+            },
+            None => 1,
+        };
+        let nft_card_map = get_nft_card_map();
+        if let Some(card) = nft_card_map.get(&card_id) {
+            let existing_metadata = token.metadata.clone().unwrap_or_default();
+
+            let mut json_value: serde_json::Value = serde_json::to_value(&card).unwrap();
+            let obj = json_value.as_object_mut().unwrap();
+
+            obj.remove("name");
+            obj.remove("url");
+            obj.remove("description");
+
+            let extra = Some(serde_json::to_string(&json_value).unwrap());
+
+            let token_metadata = TokenMetadata {
+                title: Some(card.name.to_string()),
+                description: Some(card.description.to_string()),
+                media: Some(card.url.to_string()),
+                media_hash: None,
+                copies: Some(card_count),  // we can look this up later
+                issued_at: existing_metadata.issued_at,
+                expires_at: None,
+                starts_at: None,
+                updated_at: None,
+                extra: extra,
+                reference: None,
+                reference_hash: None,
+            };
+
+            token.metadata = Some(token_metadata);
+        }
     }
 
 }
@@ -241,7 +243,12 @@ impl NonFungibleTokenCore for Contract {
     }
 
     fn nft_token(&self, token_id: TokenId) -> Option<Token> {
-        self.tokens.nft_token(token_id)
+        let original_token = self.tokens.nft_token(token_id);
+
+        original_token.map(|mut token| {
+            self.enrich_token_with_card_data(&mut token);
+            token
+        })
     }
 }
 
@@ -286,7 +293,7 @@ impl NonFungibleTokenEnumeration for Contract {
         let original_tokens = self.tokens.nft_tokens(from_index, limit);
 
         original_tokens.into_iter().map(|mut token| {
-            enrich_token_with_card_data(&mut token);
+            self.enrich_token_with_card_data(&mut token);
             token
         }).collect()
     }
@@ -297,8 +304,14 @@ impl NonFungibleTokenEnumeration for Contract {
     }
 
     fn nft_tokens_for_owner(&self, account_id: AccountId, from_index: Option<U128>, limit: Option<u64>) -> Vec<Token> {
-        self.tokens.nft_tokens_for_owner(account_id, from_index, limit)
+        let original_tokens = self.tokens.nft_tokens_for_owner(account_id, from_index, limit);
+
+        original_tokens.into_iter().map(|mut token| {
+            self.enrich_token_with_card_data(&mut token);
+            token
+        }).collect()
     }
+
 }
 
 #[near_bindgen]
@@ -312,11 +325,8 @@ impl NonFungibleTokenMetadataProvider for Contract {
 mod tests {
     use near_sdk::test_utils::{accounts, VMContextBuilder};
     use near_sdk::testing_env;
-    use std::collections::HashMap;
 
     use super::*;
-
-    const MINT_STORAGE_COST: u128 = 5870000000000000000000;
 
     fn get_context(predecessor_account_id: AccountId) -> VMContextBuilder {
         let mut builder = VMContextBuilder::new();
@@ -369,7 +379,7 @@ mod tests {
     }
 
     #[test]
-    fn test_nft_contracts_enriched() {
+    fn test_nft_tokens_enriched() {
         let account = AccountId::new_unchecked(MONSTERS_ALPHA_CONTRACT.into());
         let mut context = get_context(account.clone());
         testing_env!(context.build());
@@ -385,6 +395,8 @@ mod tests {
         let card = contract.mint_random(1.into(), account.clone());
         //assert!(card.metadata.copies == 1);
         assert!(card[0].token_id == "0-5:1");
+        let card = contract.mint_random(1.into(), account.clone());
+        assert!(card[0].token_id == "0-5:2");
         testing_env!(context
             .storage_usage(env::storage_usage())
             .account_balance(env::account_balance())
@@ -393,13 +405,16 @@ mod tests {
 
         let card = &contract.nft_tokens(None, None)[0];
         assert!(card.metadata.clone().unwrap().title != None);
+        assert!(card.metadata.clone().unwrap().description != None);
+        assert!(card.metadata.clone().unwrap().extra != None);
+        assert!(card.metadata.clone().unwrap().copies == Some(2));
     }
 
     #[test]
     fn test_full_set_listings() {
         let mut context = get_context(accounts(0));
         testing_env!(context.build());
-        let mut contract = Contract::new_default_meta(accounts(0).into());
+        let contract = Contract::new_default_meta(accounts(0).into());
 
         testing_env!(context
             .storage_usage(env::storage_usage())
