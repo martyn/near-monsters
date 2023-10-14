@@ -7,6 +7,7 @@ const ownedCount = nftsOwned.reduce((acc, nft) => {
   return acc;
 }, {});
 
+
 const Container = styled.div`
   display: flex;
   flex-direction: row;

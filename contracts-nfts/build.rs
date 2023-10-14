@@ -69,15 +69,6 @@ fn main() {
     writeln!(f, "];").unwrap();
 
 
-    writeln!(f, "pub fn get_nft_card_map<'a>() -> HashMap<&'a str, NFTCardTemplate<'a>> {{").unwrap();
-    writeln!(f, "    let mut nft_card_map: HashMap<&str, NFTCardTemplate> = HashMap::new();").unwrap();
-    writeln!(f, "    for card in NFT_CARDS.iter().cloned() {{").unwrap();
-    writeln!(f, "        nft_card_map.insert(card.id, card);").unwrap();
-    writeln!(f, "    }}").unwrap();
-    writeln!(f, "    nft_card_map").unwrap();
-    writeln!(f, "}}").unwrap();
-
-
     writeln!(f, "pub fn get_nft_card_list<'a>() -> &'a [NFTCardTemplate<'a>] {{").unwrap();
     writeln!(f, "    &NFT_CARDS").unwrap();
     writeln!(f, "}}").unwrap();
