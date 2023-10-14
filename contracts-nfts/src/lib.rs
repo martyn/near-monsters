@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use near_contract_standards::non_fungible_token::metadata::{
     NFTContractMetadata, NonFungibleTokenMetadataProvider, TokenMetadata, NFT_METADATA_SPEC,
 };
+use near_sdk::collections::LookupMap;
 use near_contract_standards::non_fungible_token::NonFungibleToken;
 use near_contract_standards::non_fungible_token::{Token, TokenId};
 use near_contract_standards::non_fungible_token::approval::NonFungibleTokenApproval;
@@ -10,7 +11,7 @@ use near_contract_standards::non_fungible_token::enumeration::NonFungibleTokenEn
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LazyOption;
 use near_sdk::{
-    env, log, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault, Promise, PromiseOrValue,
+    env, log, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault, Promise, PromiseOrValue, ONE_NEAR
 };
 use near_sdk::json_types::U128;
 use near_sdk::env::random_seed;
@@ -32,6 +33,13 @@ fn get_current_datetime() -> String {
     iso8601_datetime
 }
 
+fn get_token_id(set:&str, card_id:usize, card_count:u64) -> String {
+    format!("{}-{}:{}", set, card_id, card_count)
+}
+fn get_token_prefix(set:&str, card_id:usize) -> String {
+    format!("{}-{}", set, card_id)
+}
+
 include!("generated_data.rs");
 
 #[near_bindgen]
@@ -39,6 +47,7 @@ include!("generated_data.rs");
 pub struct Contract {
     tokens: NonFungibleToken,
     metadata: LazyOption<NFTContractMetadata>,
+    copies_by_token_prefix: Option<LookupMap<TokenId, u64>>,
 }
 
 const DATA_IMAGE_SVG_NEAR_ICON: &str = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 288 288'%3E%3Cg id='l' data-name='l'%3E%3Cpath d='M187.58,79.81l-30.1,44.69a3.2,3.2,0,0,0,4.75,4.2L191.86,103a1.2,1.2,0,0,1,2,.91v80.46a1.2,1.2,0,0,1-2.12.77L102.18,77.93A15.35,15.35,0,0,0,90.47,72.5H87.34A15.34,15.34,0,0,0,72,87.84V201.16A15.34,15.34,0,0,0,87.34,216.5h0a15.35,15.35,0,0,0,13.08-7.31l30.1-44.69a3.2,3.2,0,0,0-4.75-4.2L96.14,186a1.2,1.2,0,0,1-2-.91V104.61a1.2,1.2,0,0,1,2.12-.77l89.55,107.23a15.35,15.35,0,0,0,11.71,5.43h3.13A15.34,15.34,0,0,0,216,201.16V87.84A15.34,15.34,0,0,0,200.66,72.5h0A15.35,15.35,0,0,0,187.58,79.81Z'/%3E%3C/g%3E%3C/svg%3E";
@@ -90,50 +99,60 @@ impl Contract {
                 Some(StorageKey::Approval),
             ),
             metadata: LazyOption::new(StorageKey::Metadata, Some(&metadata)),
+            copies_by_token_prefix: Some(LookupMap::new(b"m"))
         }
     }
 
+    //TODO test, guard from unauthorized calls
+    fn mint_card(&mut self, index:u128, token_owner_id: AccountId) -> Token {
+        let monsters = get_monsters();
+        let i = index as usize;
+        let monster_index:usize = (random_seed()[i] as usize) % monsters.len();
+        let monster = &monsters[monster_index];
+        let set = "0";
+        let token_prefix = get_token_prefix(set, monster_index);
+        let card_count: u64 = match &self.copies_by_token_prefix {
+            Some(copies) => {
+                copies.get(&token_prefix).map_or(1, |count| count + 1)
+            },
+            None => 1,
+        };
+        let token_id = get_token_id(set, monster_index, card_count);
+        let token_metadata = TokenMetadata {
+            title: Some(monster.name.into()),
+            description: Some(monster.rarity.into()),
+            media: Some(monster.url.into()),
+            media_hash: None,
+            copies: Some(card_count),
+            issued_at: Some(get_current_datetime()),
+            expires_at: None,
+            starts_at: None,
+            updated_at: None,
+            extra: None,
+            reference: None,
+            reference_hash: None,
+        };
 
-    #[payable]
+        log!("Creating card with token_id {}", token_id);
+        if let Some(copies_count) = &mut self.copies_by_token_prefix {
+            copies_count.insert(&token_prefix, &card_count);
+        }
+        self.tokens.internal_mint(token_id.into(), token_owner_id.clone(), Some(token_metadata))
+        //TODO increment copies
+    }
+
+    #[private]
     pub fn mint_random(&mut self, amount: U128, token_owner_id: AccountId) -> Vec<Token> {
         assert_eq!(env::predecessor_account_id(), AccountId::new_unchecked(MONSTERS_ALPHA_CONTRACT.into()), "Unauthorized");
         (0..amount.into()).map(|index| {
-            let monsters = get_monsters();
-            let i = index as usize;
-            let monster_index:usize = (random_seed()[i] as usize) % monsters.len();
-            let monster = &monsters[monster_index];
-            let token_metadata = TokenMetadata {
-                title: Some(monster.name.into()),
-                description: Some(monster.rarity.into()),
-                media: Some(monster.url.into()),
-                media_hash: None,
-                copies: Some(1u64),
-                issued_at: Some(get_current_datetime()),
-                expires_at: None,
-                starts_at: None,
-                updated_at: None,
-                extra: None,
-                reference: None,
-                reference_hash: None,
-            };
-
-            let last_four = &(random_seed()[i..(4+i)]);
-            let card_id = format!("{}", monster_index);
-            let set = "0";
-            let rand_id = last_four
-                .iter()
-                .map(|byte| format!("{:02x}", byte))
-                .collect::<String>()
-                .to_uppercase();
-            let token_id = format!("{}-{}-{}", set, card_id, rand_id);
-            log!("Creating card with token_id {}", token_id);
-            self.tokens.internal_mint(token_id.into(), token_owner_id.clone(), Some(token_metadata))
+            self.mint_card(index, token_owner_id.clone())
         }).collect()
     }
 
     pub fn full_set_listing(&self) -> Vec<MonsterTemplate> {
         get_monsters()
     }
+
 }
 
 #[near_bindgen]
@@ -229,23 +248,6 @@ mod tests {
         builder
     }
 
-    fn sample_token_metadata() -> TokenMetadata {
-        TokenMetadata {
-            title: Some("Olympus Mons".into()),
-            description: Some("The tallest mountain in the charted solar system".into()),
-            media: None,
-            media_hash: None,
-            copies: Some(1u64),
-            issued_at: None,
-            expires_at: None,
-            starts_at: None,
-            updated_at: None,
-            extra: None,
-            reference: None,
-            reference_hash: None,
-        }
-    }
-
     #[test]
     fn test_new() {
         let mut context = get_context(accounts(1));
@@ -261,6 +263,29 @@ mod tests {
         let context = get_context(accounts(1));
         testing_env!(context.build());
         let _contract = Contract::default();
+    }
+
+    #[test]
+    fn test_mint_card_initial() {
+        let mut context = get_context(accounts(0));
+        testing_env!(context.build());
+        let mut contract = Contract::new_default_meta(accounts(0).into());
+
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .account_balance(env::account_balance())
+            .is_view(false)
+            .attached_deposit(ONE_NEAR)
+            .build());
+
+        let card = contract.mint_card(0, accounts(0));
+        //assert!(card.metadata.copies == 1);
+        assert!(card.token_id == "0-0:1");
+        let card = contract.mint_card(0, accounts(0));
+        assert!(card.token_id == "0-0:2");
+        let card = contract.mint_card(0, accounts(0));
+        assert!(card.token_id == "0-0:3");
+        //assert!(card.metadata.copies == 2);
     }
 
     #[test]
