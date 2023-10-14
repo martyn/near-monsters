@@ -2,15 +2,10 @@ const nftContract = (context.networkId === "mainnet") ? "..." : "dev-16972607819
 const fullSetList = Near.view(nftContract, "full_set_listing", {});
 const nftsOwned = Near.view(nftContract, "nft_tokens_for_owner", {account_id: context.accountId, limit:50000});//{from_index: (nftsOwned-5).toString(), limit:5});
 const ownedCount = nftsOwned.reduce((acc, nft) => {
-  // Extract the token ID's numerical part
   const tokenId = parseInt(nft.token_id.split('-')[1].split(':')[0], 10);
-
-  // Initialize or increment the count for the token ID
   acc[tokenId] = (acc[tokenId] || 0) + 1;
-
   return acc;
 }, {});
-State.init({error: null, owned: "all"});
 
 const Container = styled.div`
   display: flex;
@@ -47,11 +42,12 @@ const CardImage = styled.img`
   height: auto;
 `;
 
+State.init({error: null, owned: "all", rarity: "all"});
 function setOwnedFilter(value) {
   State.update({ ...state, owned: value });
 }
 function setRarityFilter(value) {
-  console.log("Set rarity filter", value);
+  State.update({ ...state, rarity: value });
 }
 return (
   <Container>
@@ -67,7 +63,7 @@ return (
       <div>
         <label>Rarity:</label>
         <select onChange={(e) => setRarityFilter(e.target.value)} value={rarityFilter}>
-          <option value="All">All</option>
+          <option value="all">All</option>
           <option value="Common">Common</option>
           <option value="Uncommon">Uncommon</option>
           <option value="Rare">Rare</option>
@@ -95,7 +91,9 @@ return (
     </FilterPane>
     <CardGrid>
       {fullSetList.map((item, index) => (
-        ((state.owned == "owned" && (ownedCount[index] || 0) > 0) || state.owned == "all") &&
+        (((state.owned == "owned" && (ownedCount[index] || 0) > 0) || state.owned == "all") &&
+         ((state.rarity == item.rarity) || state.rarity == "all")
+        ) &&
           <Card key={index}>
             <CardName>{item.name} - {item.rarity}</CardName>
             <CardImage src={item.url} />

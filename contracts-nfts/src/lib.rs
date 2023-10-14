@@ -15,6 +15,8 @@ use near_sdk::{
 };
 use near_sdk::json_types::U128;
 use near_sdk::env::random_seed;
+use near_sdk::serde_json;
+
 
 fn get_current_datetime() -> String {
     // Get the current block timestamp in nanoseconds.
@@ -120,9 +122,19 @@ impl Contract {
                 None => 1,
             };
             let token_id = get_token_id(set, monster_index, card_count);
+
+            let mut json_value: serde_json::Value = serde_json::to_value(&monster).unwrap();
+            let obj = json_value.as_object_mut().unwrap();
+
+            obj.remove("name");
+            obj.remove("url");
+            obj.remove("description");
+
+            let extra = Some(serde_json::to_string(&json_value).unwrap());
+
             let token_metadata = TokenMetadata {
                 title: Some(monster.name.into()),
-                description: Some(monster.rarity.into()),
+                description: Some(monster.description.into()),
                 media: Some(monster.url.into()),
                 media_hash: None,
                 copies: Some(card_count),
@@ -130,7 +142,7 @@ impl Contract {
                 expires_at: None,
                 starts_at: None,
                 updated_at: None,
-                extra: None,
+                extra: extra,
                 reference: None,
                 reference_hash: None,
             };
