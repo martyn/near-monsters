@@ -135,7 +135,7 @@ impl Contract {
         assert_eq!(env::predecessor_account_id(), AccountId::new_unchecked(MONSTERS_ALPHA_CONTRACT.into()), "Unauthorized");
         (0..amount.into()).map(|index| {
             let i = index as usize;
-            let roll = random_seed()[i] as usize;
+            let roll = random_seed()[i*2] as usize;
             let cards = if roll < 28 {
                 get_rare_nft_cards()
             } else if roll < 89 {
@@ -143,7 +143,7 @@ impl Contract {
             } else {
                 get_common_nft_cards()
             };
-            let card_index:usize = random_seed()[i+1] as usize % cards.len();
+            let card_index:usize = random_seed()[i*2+1] as usize % cards.len();
             let card = &cards[card_index];
             let set = "0";
             let card_count: u64 = match &self.copies_by_card_id {
@@ -369,13 +369,14 @@ mod tests {
             .build());
 
         let card = contract.mint_random(1.into(), account.clone());
-        //assert!(card.metadata.copies == 1);
         assert!(card[0].token_id.ends_with("1"));
         let card = contract.mint_random(1.into(), account.clone());
         assert!(card[0].token_id.ends_with("2"));
         let card = contract.mint_random(1.into(), account.clone());
         assert!(card[0].token_id.ends_with("3"));
-        //assert!(card.metadata.copies == 2);
+        let card = contract.mint_random(5.into(), account.clone());
+        assert!(card[0].token_id.ends_with("4"));
+        assert!(card[4].token_id.ends_with("8"));
     }
 
     #[test]
