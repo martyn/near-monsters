@@ -74,7 +74,7 @@ return (
     </FilterPane>
     <CardGrid>
       {fullSetList.map((item, index) => (
-        (((state.owned == "owned" && (ownedCount[index] || 0) > 0) || state.owned == "all") &&
+        (((state.owned == "owned" && (ownedCount[parseInt(item.id, 10)] || 0) > 0) || state.owned == "all") &&
          ((state.rarity == item.rarity) || state.rarity == "all")
         ) &&
           <Card key={index}>
