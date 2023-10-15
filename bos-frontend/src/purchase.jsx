@@ -38,7 +38,7 @@ const AlphaPurchase = ({ maxBuy, ftContract }) => {
   const handleSubmit = () => {
     try {
       // Perform smart contract call to buy packs
-      Near.call(ftContract, 'purchase', {}, Big("300000000000000"), state.packsToBuy*4*ONE_NEAR);
+      Near.call(ftContract, 'purchase', {}, Big("300000000000000"), state.packsToBuy*4*ONE_NEAR+300000000000000);
       State.update({error:null});
     } catch (e) {
       State.update({error:`Error from NEAR: ${e.message}`});

@@ -1,6 +1,6 @@
 //include common
 const fullSetList = Near.view(nftContract, "full_set_listing", {});
-const nftsOwned = Near.view(nftContract, "nft_tokens_for_owner", {account_id: context.accountId, limit:50000});//{from_index: (nftsOwned-5).toString(), limit:5});
+const nftsOwned = Near.view(nftContract, "nft_tokens_for_owner", {account_id: context.accountId, limit:50000});
 const ownedCount = nftsOwned.reduce((acc, nft) => {
   const tokenId = parseInt(nft.token_id.split('-')[1].split(':')[0], 10);
   acc[tokenId] = (acc[tokenId] || 0) + 1;
@@ -109,5 +109,8 @@ return (
         ))}
       </CardGrid>
     </Container>
+    <div>
+      <span class="text-decoration-underline">{nftsOwned.length}</span> NEAR Monster NFTs collected
+    </div>
   </div>
 );
