@@ -112,11 +112,15 @@ const RevealableCard = ({ index, nft }) => {
           <StyledCard rarity={rarity()}>
             <img onClick={reveal(index)} src={"https://github.com/martyn/near-monsters/blob/master/logo.jpeg?raw=true"} width={278} height={406}/>
           </StyledCard>
+          <p>{"Reveal"}</p>
           </>
         ) : (
+          <>
           <StyledCard rarity={rarity()}>
             <img className={getEffectClass()} src={nft.metadata.media} width={278} />
           </StyledCard>
+          <p>{rarity()}</p>
+          </>
         )
       }
     </CardLi>
