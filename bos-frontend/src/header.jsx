@@ -72,6 +72,7 @@ const Header = () => {
       <Nav>
         <ul>
           <NavItem section="purchase" label="Purchase ALPHA" />
+          <NavItem section="openPack" label="Open" />
           <NavItem section="inventory" label="Inventory" />
           <NavItem section="marketplace" label="Trade" />
           <li>

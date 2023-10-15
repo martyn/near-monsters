@@ -1,4 +1,4 @@
-const ftContract = (context.networkId === "mainnet") ? "..." : "dev-1693882284306-75813657022630";
+//include common
 const alphaPacksRemaining = Near.view(ftContract, "ft_balance_of", {account_id: ftContract});
 const alphaPacksOwned = Near.view(ftContract, "ft_balance_of", {account_id: context.accountId});
 const storageBalance = Near.view(ftContract, "storage_balance_of", {account_id: context.accountId});
@@ -62,7 +62,8 @@ const AlphaPurchase = ({ maxBuy, ftContract }) => {
 };
 
 return (
-  <>
+  <div className="App">
+    <Widget src={widgetSrc("header")}/>
     <div class="container border border-info p-3">
       <h3 class="text-center">
         <div>
@@ -87,5 +88,5 @@ return (
         )
       }
     </div>
-  </>
+  </div>
 );

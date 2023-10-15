@@ -1,4 +1,4 @@
-const nftContract = (context.networkId === "mainnet") ? "..." : "dev-1697311460688-92526053453432";
+//include common
 const fullSetList = Near.view(nftContract, "full_set_listing", {});
 const nftsOwned = Near.view(nftContract, "nft_tokens_for_owner", {account_id: context.accountId, limit:50000});//{from_index: (nftsOwned-5).toString(), limit:5});
 const ownedCount = nftsOwned.reduce((acc, nft) => {
@@ -50,38 +50,42 @@ function setRarityFilter(value) {
   State.update({ ...state, rarity: value });
 }
 return (
-  <Container>
-    <FilterPane>
-      <div>
-        <label>Owned:</label>
-        <select onChange={(e) => setOwnedFilter(e.target.value)} value={state.ownedFilter}>
-          <option value="all">All</option>
-          <option value="owned">Owned Only</option>
-        </select>
-      </div>
-      
-      <div>
-        <label>Rarity:</label>
-        <select onChange={(e) => setRarityFilter(e.target.value)} value={rarityFilter}>
-          <option value="all">All</option>
-          <option value="Common">Common</option>
-          <option value="Uncommon">Uncommon</option>
-          <option value="Rare">Rare</option>
-        </select>
-      </div>
+  <div className="App">
+    <Widget src={widgetSrc("header")}/>
+    <Container>
+      <FilterPane>
+        <div>
+          <label>Owned:</label>
+          <select onChange={(e) => setOwnedFilter(e.target.value)} value={state.ownedFilter}>
+            <option value="all">All</option>
+            <option value="owned">Owned Only</option>
+            <option value="missing">Missing Only</option>
+          </select>
+        </div>
+        
+        <div>
+          <label>Rarity:</label>
+          <select onChange={(e) => setRarityFilter(e.target.value)} value={rarityFilter}>
+            <option value="all">All</option>
+            <option value="Common">Common</option>
+            <option value="Uncommon">Uncommon</option>
+            <option value="Rare">Rare</option>
+          </select>
+        </div>
 
-    </FilterPane>
-    <CardGrid>
-      {fullSetList.map((item, index) => (
-        (((state.owned == "owned" && (ownedCount[parseInt(item.id, 10)] || 0) > 0) || state.owned == "all") &&
-         ((state.rarity == item.rarity) || state.rarity == "all")
-        ) &&
-          <Card key={index}>
-            <CardName>{item.name} - {item.rarity}</CardName>
-            <CardImage src={item.url} />
-            <div>Copies Owned: {ownedCount[parseInt(item.id, 10)] || 0}</div>
-          </Card>
-      ))}
-    </CardGrid>
-  </Container>
+      </FilterPane>
+      <CardGrid>
+        {fullSetList.map((item, index) => (
+          (((state.owned == "owned" && (ownedCount[parseInt(item.id, 10)] || 0) > 0) || (state.owned == "missing" && !ownedCount[parseInt(item.id, 10)]) ||state.owned == "all") &&
+           ((state.rarity == item.rarity) || state.rarity == "all")
+          ) &&
+            <Card key={index}>
+              <CardName>{item.name} - {item.rarity}</CardName>
+              <CardImage src={item.url} />
+              <div>Copies Owned: {ownedCount[parseInt(item.id, 10)] || 0}</div>
+            </Card>
+        ))}
+      </CardGrid>
+    </Container>
+  </div>
 );
