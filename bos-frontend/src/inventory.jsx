@@ -42,12 +42,26 @@ const CardImage = styled.img`
   height: auto;
 `;
 
-State.init({error: null, owned: "all", rarity: "all"});
+State.init({error: null, owned: "all", rarity: "all", sort_by: "id"});
 function setOwnedFilter(value) {
   State.update({ ...state, owned: value });
 }
 function setRarityFilter(value) {
   State.update({ ...state, rarity: value });
+}
+function setSortBy(value) {
+  State.update({ ...state, sort_by: value });
+}
+function sortByCriteria(cardA, cardB) {
+  if(state.sort_by === "id") {
+    return cardA.id.localeCompare(cardB.id);
+  } else if(state.sort_by === "name") {
+    return cardA.name.localeCompare(cardB.name);
+  } else if(state.sort_by === "issued_at") {
+    //TODO lookup in owned
+    return false;
+  }
+
 }
 return (
   <div className="App">
@@ -72,10 +86,18 @@ return (
             <option value="Rare">Rare</option>
           </select>
         </div>
+        <div>
+          <label>Sort by:</label>
+          <select onChange={(e) => setSortBy(e.target.value)} value={sortBy}>
+            <option value="id">Card ID</option>
+            <option value="name">Name</option>
+            <option value="issued_at">Date Issued</option>
+          </select>
+        </div>
 
       </FilterPane>
       <CardGrid>
-        {fullSetList.map((item, index) => (
+        {fullSetList.sort(sortByCriteria).map((item, index) => (
           (((state.owned == "owned" && (ownedCount[parseInt(item.id, 10)] || 0) > 0) || (state.owned == "missing" && !ownedCount[parseInt(item.id, 10)]) ||state.owned == "all") &&
            ((state.rarity == item.rarity) || state.rarity == "all")
           ) &&
