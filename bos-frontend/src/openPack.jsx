@@ -40,6 +40,9 @@ const CardLi = styled.li`
   }
 `;
 
+const UnrevealedCard = styled.div`
+  border: 3px solid;
+`
 const StyledCard = styled.div`
   border: 3px solid;
 
@@ -47,8 +50,8 @@ const StyledCard = styled.div`
     switch (rarity) {
       case 'Land':
         return `
-          border-image: url('/path-to-land-border.png') 30 round; 
-          background: url('/path-to-land-background.gif');
+          border-color: #33FF33;
+          box-shadow: 0 0 10px gold;
         `;
       case 'Rare':
         return `
@@ -56,7 +59,7 @@ const StyledCard = styled.div`
           box-shadow: 0 0 10px gold;
         `;
       case 'Uncommon':
-        return 'border-color: silver;';
+        return 'border-color: #3333FF;';
       default:
         return 'border-color: gray;';
     }
@@ -109,15 +112,15 @@ const RevealableCard = ({ index, nft }) => {
       {
         (!state.reveal[index]) ? (
           <>
-          <StyledCard rarity={rarity()}>
+          <UnrevealedCard rarity={rarity()}>
             <img onClick={reveal(index)} src={"https://github.com/martyn/near-monsters/blob/master/logo.jpeg?raw=true"} width={278} height={406}/>
-          </StyledCard>
+          </UnrevealedCard>
           <p>{"Reveal"}</p>
           </>
         ) : (
           <>
           <StyledCard rarity={rarity()}>
-            <img className={getEffectClass()} src={nft.metadata.media} width={278} />
+            <img className={getEffectClass()} src={nft.metadata.media} width={278} height={406}/>
           </StyledCard>
           <p>{rarity()}</p>
           </>

@@ -33,9 +33,10 @@ fn get_current_datetime() -> String {
     iso8601_datetime
 }
 
-fn get_token_id(set:&str, card_id:&str, card_count:u64) -> String {
-    format!("{}-{}:{}", set, card_id, card_count)
+fn get_token_id(card_id:&str, card_count:u64) -> String {
+    format!("{}:{}", card_id, card_count)
 }
+
 include!("generated_data.rs");
 
 pub fn get_nft_cards_by_rarity<'a>(rarity: &str) -> Vec<NFTCardTemplate<'a>> {
@@ -44,6 +45,10 @@ pub fn get_nft_cards_by_rarity<'a>(rarity: &str) -> Vec<NFTCardTemplate<'a>> {
         .filter(|&card| card.rarity == rarity)
         .cloned()
         .collect()
+}
+
+pub fn get_land_nft_cards<'a>() -> Vec<NFTCardTemplate<'a>> {
+    get_nft_cards_by_rarity("Land")
 }
 
 pub fn get_rare_nft_cards<'a>() -> Vec<NFTCardTemplate<'a>> {
@@ -134,23 +139,24 @@ impl Contract {
         (0..amount.into()).map(|index| {
             let i = index as usize;
             let roll = random_seed()[i*2] as usize;
-            let cards = if roll < 28 {
+            let cards = if roll < 8 {
+                get_land_nft_cards()
+            } else if roll < 35 {
                 get_rare_nft_cards()
-            } else if roll < 89 {
+            } else if roll < 96 {
                 get_uncommon_nft_cards()
             } else {
                 get_common_nft_cards()
             };
             let card_index:usize = random_seed()[i*2+1] as usize % cards.len();
             let card = &cards[card_index];
-            let set = "0";
             let card_count: u64 = match &self.copies_by_card_id {
                 Some(copies) => {
                     copies.get(&card.id.to_string()).map_or(1, |count| count + 1)
                 },
                 None => 1,
             };
-            let token_id = get_token_id(set, card.id, card_count);
+            let token_id = get_token_id(card.id, card_count);
 
             let token_metadata = TokenMetadata {
                 title: None,
@@ -182,9 +188,6 @@ impl Contract {
 
     fn enrich_token_with_card_data(&self, token: &mut Token) {
         let card_id = token.token_id.split(':')
-            .next()
-            .unwrap()
-            .rsplit('-')
             .next()
             .map(|s| s.to_string())
             .unwrap();
@@ -375,6 +378,7 @@ mod tests {
         let card = contract.mint_random(5.into(), account.clone());
         assert!(card[0].token_id.ends_with("4"));
         assert!(card[4].token_id.ends_with("8"));
+        let card = contract.mint_random(16.into(), account.clone());
     }
 
     #[test]

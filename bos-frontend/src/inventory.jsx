@@ -2,7 +2,7 @@
 const fullSetList = Near.view(nftContract, "full_set_listing", {});
 const nftsOwned = Near.view(nftContract, "nft_tokens_for_owner", {account_id: context.accountId, limit:50000});
 const ownedCount = nftsOwned.reduce((acc, nft) => {
-  const tokenId = parseInt(nft.token_id.split('-')[1].split(':')[0], 10);
+  const tokenId = nft.token_id.split(':')[0];
   acc[tokenId] = (acc[tokenId] || 0) + 1;
   return acc;
 }, {});
@@ -84,6 +84,7 @@ return (
             <option value="Common">Common</option>
             <option value="Uncommon">Uncommon</option>
             <option value="Rare">Rare</option>
+            <option value="Land">Land</option>
           </select>
         </div>
         <div>
@@ -98,13 +99,13 @@ return (
       </FilterPane>
       <CardGrid>
         {fullSetList.sort(sortByCriteria).map((item, index) => (
-          (((state.owned == "owned" && (ownedCount[parseInt(item.id, 10)] || 0) > 0) || (state.owned == "missing" && !ownedCount[parseInt(item.id, 10)]) ||state.owned == "all") &&
+          (((state.owned == "owned" && (ownedCount[item.id] || 0) > 0) || (state.owned == "missing" && !ownedCount[item.id]) ||state.owned == "all") &&
            ((state.rarity == item.rarity) || state.rarity == "all")
           ) &&
             <Card key={index}>
               <CardName>{item.name} - {item.rarity}</CardName>
               <CardImage src={item.url} />
-              <div>Copies Owned: {ownedCount[parseInt(item.id, 10)] || 0}</div>
+              <div>Copies Owned: {ownedCount[item.id] || 0}</div>
             </Card>
         ))}
       </CardGrid>
