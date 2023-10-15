@@ -6,9 +6,9 @@ const nftsOwned = Near.view(nftContract, "nft_supply_for_owner", {account_id: co
 const nfts = Near.view(nftContract, "nft_tokens_for_owner", {account_id: context.accountId, limit:1000});//{from_index: (nftsOwned-5).toString(), limit:5});
 
 const sortedNfts = nfts.sort((a, b) => {
-  const dateA = a.metadata.issued_at;
-  const dateB = b.metadata.issued_at;
-  return dateA.localeCompare(dateB);
+  const dateA = Big(a.metadata.issued_at.replace(".", "").replace("Z", ""));
+  const dateB = Big(b.metadata.issued_at.replace(".", "").replace("Z", ""));
+  return (dateA < dateB) ? 1 : -1;
 });
 
 const revealNfts = sortedNfts.slice(0, 5);
@@ -108,9 +108,11 @@ const RevealableCard = ({ index, nft }) => {
     <CardLi>
       {
         (!state.reveal[index]) ? (
+          <>
           <StyledCard rarity={rarity()}>
             <img onClick={reveal(index)} src={"https://github.com/martyn/near-monsters/blob/master/logo.jpeg?raw=true"} width={278} height={406}/>
           </StyledCard>
+          </>
         ) : (
           <StyledCard rarity={rarity()}>
             <img className={getEffectClass()} src={nft.metadata.media} width={278} />
