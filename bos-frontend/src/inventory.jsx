@@ -92,7 +92,6 @@ return (
           <select onChange={(e) => setSortBy(e.target.value)} value={sortBy}>
             <option value="id">Card ID</option>
             <option value="name">Name</option>
-            <option value="issued_at">Date Issued</option>
           </select>
         </div>
 

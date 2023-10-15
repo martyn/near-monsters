@@ -17,7 +17,6 @@ use near_sdk::json_types::U128;
 use near_sdk::env::random_seed;
 use near_sdk::serde_json;
 
-
 fn get_current_datetime() -> String {
     // Get the current block timestamp in nanoseconds.
     let timestamp_ns = env::block_timestamp();
@@ -28,9 +27,10 @@ fn get_current_datetime() -> String {
     // Calculate the remaining nanoseconds after the seconds are accounted for.
     let remaining_ns = timestamp_ns % 1_000_000_000;
 
-    let iso8601_datetime = format!("{}.{:09}Z", timestamp_s, remaining_ns);
+    //#TODO This is not actually iso8601. Adding chronos library causes smart contract panick.
+    let datetime_str = format!("{}.{:09}Z", timestamp_s, remaining_ns);
     
-    iso8601_datetime
+    datetime_str
 }
 
 fn get_token_id(card_id:&str, card_count:u64) -> String {
