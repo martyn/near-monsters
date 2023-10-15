@@ -1,5 +1,5 @@
-const ftContract = (context.networkId === "mainnet") ? "..." : "dev-1693882284306-75813657022630";
-const nftContract = (context.networkId === "mainnet") ? "..." : "dev-1697311460688-92526053453432";
+//include common
+
 const alphaPacksOwned = Near.view(ftContract, "ft_balance_of", {account_id: context.accountId});
 const isOpenDisabled = (alphaPacksOwned === 0);
 const nftsOwned = Near.view(nftContract, "nft_supply_for_owner", {account_id: context.accountId});
@@ -24,7 +24,8 @@ const openPack = () => {
 }
 
 return (
-  <>
+  <div className="App">
+    <Widget src={widgetSrc("header")}/>
     <div class="container border border-info p-3">
       <h3 class="text-center">
         {state.error && <p className="error">{state.error}</p>}
@@ -45,5 +46,5 @@ return (
         <span class="text-decoration-underline">{nftsOwned}</span> Monster NFTs collected
       </div>
     </div>
-  </>
+  </div>
 )

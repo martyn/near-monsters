@@ -7,7 +7,6 @@ const ownedCount = nftsOwned.reduce((acc, nft) => {
   return acc;
 }, {});
 
-
 const Container = styled.div`
   display: flex;
   flex-direction: row;
@@ -39,7 +38,7 @@ const CardName = styled.label`
 `;
 
 const CardImage = styled.img`
-  width: 224px;
+  width: 278px;
   height: auto;
 `;
 
