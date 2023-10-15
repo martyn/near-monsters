@@ -4,10 +4,11 @@ const alphaPacksOwned = Near.view(ftContract, "ft_balance_of", {account_id: cont
 const isOpenDisabled = (alphaPacksOwned === 0);
 const nftsOwned = Near.view(nftContract, "nft_supply_for_owner", {account_id: context.accountId});
 const nfts = Near.view(nftContract, "nft_tokens_for_owner", {account_id: context.accountId, limit:1000});//{from_index: (nftsOwned-5).toString(), limit:5});
+
 const sortedNfts = nfts.sort((a, b) => {
   const dateA = a.metadata.issued_at;
   const dateB = b.metadata.issued_at;
-  return new Date(dateB) < new Date(dateA);
+  return dateA.localeCompare(dateB);
 });
 
 const revealNfts = sortedNfts.slice(0, 5);
@@ -35,29 +36,7 @@ const CardLi = styled.li`
   box-sizing: border-box; // Ensures padding doesn't increase card size.
   
   img {
-    transition: all 1s ease-in-out;
-    transform-origin: center;
-
-    // Initial states
-    opacity: 0;
-    transform: scale(0.8);
-
-    &.revealed {
-      opacity: 1;
-      transform: scale(1);
-    }
-
-    &.uncommon-effect.revealed {
-      transform: scale(1.1);
-    }
-
-    &.rare-effect.revealed {
-      transform: rotateY(360deg);
-    }
-
-    &.land-effect.revealed {
-      transform: rotateY(360deg) scale(1.1);
-    }
+    cursor: pointer;
   }
 `;
 
@@ -96,19 +75,13 @@ const RevealableCard = ({ index, nft }) => {
 
   const reveal = (index) => {
       return () => {
-          let reveal = state.reveal;
-          reveal[index] = false;
-          State.update({ ...state, reveal: reveal });
-
-          setTimeout(() => {
-              let reveal = state.reveal;
-              reveal[index] = true;
-              if(reveal.every((x) => x)) {
-                Storage.privateSet("lastOpened", (new Date()).toISOString());
-                console.log("Set last opened", Storage.privateGet("lastOpened"));
-              }
-              State.update({ ...state, reveal: reveal });
-          }, 50);
+        let reveal = state.reveal;
+        reveal[index] = true;
+        if(reveal.every((x) => x)) {
+          Storage.privateSet("lastOpened", (new Date()).toISOString());
+          console.log("Set last opened", Storage.privateGet("lastOpened"));
+        }
+        State.update({ ...state, reveal: reveal });
       };
   };
   const rarity = () => {
@@ -135,11 +108,12 @@ const RevealableCard = ({ index, nft }) => {
     <CardLi>
       {
         (!state.reveal[index]) ? (
-          <button onClick={reveal(index)}>Reveal</button>
+          <StyledCard rarity={rarity()}>
+            <img onClick={reveal(index)} src={"https://github.com/martyn/near-monsters/blob/master/logo.jpeg?raw=true"} width={278} height={406}/>
+          </StyledCard>
         ) : (
           <StyledCard rarity={rarity()}>
             <img className={getEffectClass()} src={nft.metadata.media} width={278} />
-            <p>{nft.metadata.title} {nft.metadata.description} {rarity()}</p>
           </StyledCard>
         )
       }

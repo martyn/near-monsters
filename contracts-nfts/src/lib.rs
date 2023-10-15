@@ -28,8 +28,6 @@ fn get_current_datetime() -> String {
     // Calculate the remaining nanoseconds after the seconds are accounted for.
     let remaining_ns = timestamp_ns % 1_000_000_000;
 
-    // Create an ISO 8601-like datetime string.
-    // Note: We're not dealing with time zones here; this is a simplified example.
     let iso8601_datetime = format!("{}.{:09}Z", timestamp_s, remaining_ns);
     
     iso8601_datetime
