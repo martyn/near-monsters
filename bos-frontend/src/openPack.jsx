@@ -24,9 +24,7 @@ const openPack = () => {
   } catch (e) {
     State.update({error:`Error from NEAR: ${e.message}`});
   }
-
 }
-
 
 const RevealableCard = ({ index, nft }) => {
   const reveal = (index) => {
