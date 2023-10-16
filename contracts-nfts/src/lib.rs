@@ -148,7 +148,8 @@ impl Contract {
             } else {
                 get_common_nft_cards()
             };
-            let card_index:usize = random_seed()[i*2+1] as usize % cards.len();
+
+            let card_index = ((random_seed()[i*2+1] as f64 / 256.0) * ((cards.len()-1) as f64)).round() as usize; 
             let card = &cards[card_index];
             let card_count: u64 = match &self.copies_by_card_id {
                 Some(copies) => {
