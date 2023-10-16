@@ -8,7 +8,7 @@ NEAR Monsters is a collectible trading card game on the NEAR blockchain.
 
 NEAR Monsters ALPHA sale is LIVE on mainnet. There are 25,000 limited edition packs for sale at 4 NEAR each.
 
-Check it out at [https://nearmonsters.com](nearmonsters.com).
+Check it out at [nearmonsters.com](https://nearmonsters.com)
 
 # Testing
 
