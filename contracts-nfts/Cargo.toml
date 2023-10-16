@@ -27,3 +27,6 @@ csv = "1.1"
 
 [build-dependencies]
 csv = "1.1"
+
+[features]
+use_prod_chain = []

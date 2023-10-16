@@ -12,7 +12,6 @@ const sortedNfts = nfts.sort((a, b) => {
 });
 
 const revealNfts = sortedNfts.slice(0, 5);
-const purchaseLink = "https://test.near.org/monstersdev.testnet/widget/purchase";
 
 const lastOpened = Storage.privateGet("lastOpened");
 const allowReveal = true;//(sortedNfts.length > 0) && (!lastOpened || (new Date(sortedNfts[0].metadata.issued_at) > new Date(lastOpened)));
@@ -113,7 +112,7 @@ const RevealableCard = ({ index, nft }) => {
         (!state.reveal[index]) ? (
           <>
           <UnrevealedCard rarity={rarity()}>
-            <img onClick={reveal(index)} src={"https://github.com/martyn/near-monsters/blob/master/logo.jpeg?raw=true"} width={278} height={406}/>
+            <img onClick={reveal(index)} src={"https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/back.png"} width={278} height={406}/>
           </UnrevealedCard>
           <p>{"Reveal"}</p>
           </>
@@ -140,7 +139,7 @@ return (
           <div>
             <span class="text-decoration-underline">{alphaPacksOwned}</span> packs owned
             <button onClick={openPack} disabled={isOpenDisabled}>Open</button>
-            <a href={purchaseLink}>Buy More</a>
+            <a href={"purchase"}>Buy More</a>
           </div>
         </div>
       </h3>

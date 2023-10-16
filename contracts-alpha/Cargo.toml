@@ -23,3 +23,6 @@ near-contract-standards = { git = "https://github.com/near/near-sdk-rs.git", bra
 near-sdk = { git = "https://github.com/near/near-sdk-rs.git", branch = "master", package = "near-sdk" }
 near-sdk-macros = { git = "https://github.com/near/near-sdk-rs.git", branch = "master", package = "near-sdk-macros" }
 serde = { version = "1.0.188", features = ["derive"] }
+
+[features]
+use_prod_chain = []
