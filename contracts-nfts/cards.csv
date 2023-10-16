@@ -1,7 +1,7 @@
 id,name,description,rarity,types,alignment,governance_style,attack,defense,mana,url
 0-001,"Deathbringer, The Undying",A fearsome undead warrior dressed in dark armor.,Rare,"Undead,Warrior",Evil,"Tyrant, Fear Monger",9.0,8.0,11,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-001.png
 0-002,Spectre of the Night,A translucent spirit warrior glowing in blue.,Common,"Spirit,Warrior",Neutral,Telepathic Manipulation,5.0,5.0,4,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-002.png
-0-003,Woodland Lycan,A ferocious werewolf beast ready to pounce.,Uncommon,"Beast,Warrior",Neutral,Fear Monger,6.0,7.0,9,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-003.png
+0-003,Woodland Lycan,A ferocious werewolf beast ready to pounce.,Common,"Beast,Warrior",Neutral,Fear Monger,6.0,7.0,9,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-003.png
 0-004,Infernal Guardian,A fiery elemental bird with majestic plumage.,Common,"Celestial,Demon",Good,"Charismatic Charm, Egalitarian",5.0,6.0,5,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-004.png
 0-005,Lord Malthor,A menacing demon warrior with blood-red armor.,Rare,"Demon,Warrior",Evil,"Tyrant, Fear Monger",8.0,8.0,11,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-005.png
 0-006,"Moros, The Shadowmancer",A dark mage wielding shadowy powers.,Uncommon,"Mage,Undead",Evil,"Trickster, Telepathic Manipulation",7.0,6.0,7,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-006.png
@@ -122,7 +122,7 @@ id,name,description,rarity,types,alignment,governance_style,attack,defense,mana,
 0-121,Oracle of Frostbound,Mystic seer who gazes into the icy abyss for answers.,Common,"Mage,Spirit",Neutral,Telepathic Manipulation,5.0,7.0,5,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-121.png
 0-122,Lord Warfang the Scorcher,Bearer of the flaming scepter and dominator of battlefields.,Rare,"Undead,Elemental",Evil,"Tyrant,Strategist",8.0,6.0,11,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-122.png
 0-123,"Laelia, Radiant Battlemage",A sorceress blending the arts of magic and combat.,Rare,"Mage,Warrior",Good,"Benevolent Overseer,Strategist",6.0,7.0,11,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-123.png
-0-124,Dreadfiend of the Abyss,"A creature from the fathomless depths, exuding malevolence.",Common,"Demon,Beast",Evil,"Fear Monger,Tyrant",8.0,6.0,5,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-124.png
+0-124,Dreadfiend of the Abyss,"A creature from the fathomless depths, exuding malevolence.",Uncommon,"Demon,Beast",Evil,"Fear Monger,Tyrant",8.0,6.0,5,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-124.png
 0-125,Sir Thoran the Valiant,A knight bound by honor and a code of valor.,Uncommon,"Vampire,Warrior",Good,"Egalitarian,Theocracy",7.0,7.0,9,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-125.png
 0-126,Frostclaw Behemoth,A ferocious creature hailing from the icy tundras.,Common,"Beast,Elemental",Neutral,"Tyrant,Isolationist",7.0,6.0,9,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-126.png
 0-127,Cursed Bear,A mischievous cursed bear.,Common,"Vampire, Beast",Evil,Trickster,4.0,7.0,4,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-127.png
