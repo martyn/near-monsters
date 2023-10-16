@@ -130,7 +130,7 @@ const RevealableCard = ({ index, nft }) => {
 };
 
 return (
-  <div className="App">
+  <App>
     <Widget src={widgetSrc("header")}/>
     <div class="container border border-info p-3">
       <h3 class="text-center">
@@ -153,5 +153,5 @@ return (
         </div>
       }
     </div>
-  </div>
+  </App>
 )

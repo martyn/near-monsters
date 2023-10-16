@@ -13,10 +13,13 @@ const title = props.title ?? `${name} @${accountId}`;
 const tooltip =
   props.tooltip && (props.tooltip === true ? title : props.tooltip);
 
+const imageSrc = (context.networkId === "mainnet") ? "mob.near/widget/Image" : "rubycoptest.testnet/widget/Image";
+const overlayTriggerSrc = (context.networkId === "mainnet") ? "mob.near/widget/Profile.OverlayTrigger" : "rubycoptest.testnet/widget/Profile.OverlayTrigger";
+
 const inner = (
   <div className={className} style={style}>
     <Widget
-      src="rubycoptest.testnet/widget/Image"
+      src={imageSrc}
       props={{
         image,
         alt: title,
@@ -32,7 +35,7 @@ const inner = (
 
 return props.tooltip ? (
   <Widget
-    src="rubycoptest.testnet/widget/Profile.OverlayTrigger"
+    src={overlayTriggerSrc}
     props={{ accountId, children: inner }}
   />
 ) : (

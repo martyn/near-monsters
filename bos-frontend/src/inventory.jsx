@@ -64,7 +64,7 @@ function sortByCriteria(cardA, cardB) {
 
 }
 return (
-  <div className="App">
+  <App>
     <Widget src={widgetSrc("header")}/>
     <Container>
       <FilterPane>
@@ -112,5 +112,5 @@ return (
     <div>
       <span class="text-decoration-underline">{nftsOwned.length}</span> NEAR Monster NFTs collected
     </div>
-  </div>
+  </App>
 );
