@@ -14,7 +14,7 @@ const sortedNfts = nfts.sort((a, b) => {
 const revealNfts = sortedNfts.slice(0, 5);
 
 const lastOpened = Storage.privateGet("lastOpened");
-const allowReveal = true;//(sortedNfts.length > 0) && (!lastOpened || (new Date(sortedNfts[0].metadata.issued_at) > new Date(lastOpened)));
+const allowReveal = (sortedNfts.length > 0) && (!lastOpened || (Big(sortedNfts[0].metadata.issued_at.replace(".", "").replace("Z", "")) > Big(lastOpened.replace(".", "").replace("Z", ""))));
 
 State.init({error: null, reveal: [false, false, false, false, false]});
 
@@ -73,18 +73,43 @@ const openPack = () => {
   }
 }
 
-const RevealableCard = ({ index, nft }) => {
+const getCurrentDatetime = () => {
+  //mirror smart contract format
+  const timestampMs = new Date().getTime();
+  const timestampNs = timestampMs * 1_000_000;
+  const timestampS = Math.floor(timestampNs / 1_000_000_000);
+  const remainingNs = timestampNs % 1_000_000_000;
+  const datetimeStr = `${timestampS}.000000000Z`;
+  return datetimeStr;
+}
 
-  const reveal = (index) => {
-      return () => {
-        let reveal = state.reveal;
-        reveal[index] = true;
-        if(reveal.every((x) => x)) {
-          Storage.privateSet("lastOpened", (new Date()).toISOString());
-          console.log("Set last opened", Storage.privateGet("lastOpened"));
-        }
-        State.update({ ...state, reveal: reveal });
-      };
+const reveal = (index) => {
+  let reveal = state.reveal;
+  reveal[index] = true;
+  State.update({ ...state, reveal: reveal });
+};
+
+const revealAll = () => {
+  let currentIndex = 0;
+
+  const loop = () => {
+    if (currentIndex < 5) {
+      reveal(currentIndex);
+      currentIndex++;
+      setTimeout(loop, 500);
+    }
+  };
+
+  loop();
+};
+
+const hide = () => {
+  Storage.privateSet("lastOpened", getCurrentDatetime());
+}
+
+const RevealableCard = ({ index, nft }) => {
+  const revealCard = (index) => {
+    return () => {reveal(index);}
   };
   const rarity = () => {
     return JSON.parse(nft.metadata.extra).rarity;
@@ -112,7 +137,7 @@ const RevealableCard = ({ index, nft }) => {
         (!state.reveal[index]) ? (
           <>
           <UnrevealedCard rarity={rarity()}>
-            <img onClick={reveal(index)} src={"https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/back.png"} width={278} height={406}/>
+            <img onClick={revealCard(index)} src={"https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/back.png"} width={278} height={406}/>
           </UnrevealedCard>
           <p>{"Reveal"}</p>
           </>
@@ -145,6 +170,8 @@ return (
       </h3>
       {allowReveal &&
         <div><p>Your pack is ready!</p>
+          {state.reveal.every((x) => x) && <button onClick={hide}>Hide</button>}
+          {state.reveal.some((x) => !x) && <button onClick={revealAll}>Reveal All</button>}
           <CardList>
             {revealNfts.map((nft, index) => (
               <RevealableCard nft={nft} index={index} />

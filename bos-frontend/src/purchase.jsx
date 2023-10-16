@@ -4,6 +4,8 @@ const alphaPacksOwned = Near.view(ftContract, "ft_balance_of", {account_id: cont
 const ONE_NEAR = Big("1e24");
 const openPacksLink = "https://test.near.org/monstersdev.testnet/widget/openPack";
 const error = (context.accountId ? null : "You must log in!");
+const storageBalance = Near.view(ftContract, "storage_balance_of", {account_id: context.accountId});
+const isRegistered = (storageBalance !== null);
 State.init({packsToBuy: null, estimatedCost: 0, error: error});
 
 const register = () => {
