@@ -85,7 +85,7 @@ id,name,description,rarity,types,alignment,governance_style,attack,defense,mana,
 0-084,Phoenix Ascendant,A reborn spirit with fiery wings of vengeance.,Uncommon,"Spirit,Elemental",Neutral,"Benevolent Overseer,Strategist",7.0,6.0,10,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-084.png
 0-085,Kraken's Terror,Deep sea terror with tentacles of doom.,Common,"Beast,Demon",Evil,Fear Monger,8.0,12.0,5,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-085.png
 0-086,Gargoyle Watcher,Stone sentinel guarding the ancient spires.,Common,"Beast,Demon",Neutral,"Isolationist,Strategist",7.0,10.0,5,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-086.png
-0-087,Verdant Dragon,A dragon that harnesses the power of the earth.,common,"Beast,Elemental",Neutral,"Strategist,Egalitarian",6.0,7.0,8,
+0-087,Emerald Dragon,A dragon that harnesses the power of the earth.,Common,"Beast,Elemental",Neutral,"Strategist,Egalitarian",6.0,7.0,8,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-087.png
 0-088,Reaper of Shadows,"A ruler of the undead, ever seeking souls.",Rare,"Undead,Mage",Evil,"Fear Monger,Tyrant",5.0,6.0,10,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-088.png
 0-089,Orcus the Green Menace,A fearsome orc with a hunger for battle.,Rare,"Warrior,Beast",Evil,"Tyrant,Isolationist",7.0,8.0,12,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-089.png
 0-090,Winterwolf,A guardian beast with a chilling howl.,Common,"Beast,Spirit",Neutral,"Isolationist,Charismatic Charm",6.0,9.0,4,https://nearmonsters.s3.us-west-004.backblazeb2.com/alpha/final/0-090.png
